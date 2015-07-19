@@ -21,6 +21,24 @@ void MD4_Init(md4_t * md)
 	md.s._8[0xf] = 0x10;
 }
 
+static uint32_t f(uint32_t x, uint32_t y, uint32_t z)
+{
+	/* XY v not(X)Z */
+	return x*y | (~x)*z
+}
+
+static uint32_t g(uint32_t x, uint32_t y, uint32_t z)
+{
+	/* XY v XZ v YZ */
+	return x*y | x*z | y*z;
+}
+
+static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
+{
+	/* X xor Y xor Z */
+	return x ^ y ^ z;
+}
+
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
 }
