@@ -1,6 +1,8 @@
 
 #include "md4.h"
 
+#include <string.h>
+
 md4_t * MD4_Init(md4_t * md)
 {
 	if (!md) {
@@ -57,5 +59,19 @@ void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 
 void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 {
+	static uint8_t const pad[56] = {
+		0x80, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+	};
+
+	MD4_Update(md, pad, 56);
+	MD4_Update(md, (unsigned char*)&md->count, 56);
+
+	memcpy(digest, (unsigned char *)md->s._8, len);
 }
 
