@@ -1,11 +1,11 @@
 
 .PHONY: clean
 
-md4.o: md4.c
+md4: main.o md4.o
 
 .o.c:
 	$(CC) -c $<
 
 clean:
-	rm -f *.o a.out
+	rm -f *.o md4
 

@@ -57,10 +57,16 @@ void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
 }
 
+static int compute_pad_len(int count)
+{
+	return 64 - ((count + 8) & 0x3f);
+}
+
 void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 {
-	static uint8_t const pad[56] = {
+	static uint8_t const pad[64] = {
 		0x80, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
@@ -69,9 +75,19 @@ void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 		0, 0, 0, 0, 0, 0, 0, 0,
 	};
 
-	MD4_Update(md, pad, 56);
-	MD4_Update(md, (unsigned char*)&md->count, 56);
+	int i;
+	for (i = 0; i < 129; ++i) {
+		int pad_len = compute_pad_len(i);
+		printf("%3d %2d %4d\n", i, pad_len, 8*i + 8*pad_len+64);
+	}
+	return;
 
-	memcpy(digest, (unsigned char *)md->s._8, len);
+	MD4_Update(md, pad, compute_pad_len(md->count));
+	md->count *= 8;
+	MD4_Update(md, (unsigned char*)&md->count, sizeof(md->count));
+
+	if (digest) {
+		memcpy(digest, (unsigned char *)md->s._8, len);
+	}
 }
 
