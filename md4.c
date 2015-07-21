@@ -40,13 +40,13 @@ static uint32_t rol(uint32_t x, int y)
 static uint32_t f(uint32_t x, uint32_t y, uint32_t z)
 {
 	/* XY v not(X)Z */
-	return x*y | (~x)*z;
+	return x&y | (~x)&z;
 }
 
 static uint32_t g(uint32_t x, uint32_t y, uint32_t z)
 {
 	/* XY v XZ v YZ */
-	return x*y | x*z | y*z;
+	return x&y | x&z | y&z;
 }
 
 static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
@@ -90,13 +90,78 @@ static void round1(md4_t * md)
 	md->s._32[3] += D;
 }
 
+static void round2(md4_t * md)
+{
+#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->block[i] + 0x5a827999, s))
+
+	uint32_t A = md->s._32[0];
+	uint32_t B = md->s._32[1];
+	uint32_t C = md->s._32[2];
+	uint32_t D = md->s._32[3];
+
+	r2(D, A, B, C,  4,  5);
+	r2(C, D, A, B,  8,  9);
+	r2(B, C, D, A, 12, 13);
+	r2(A, B, C, D,  1,  3);
+	r2(D, A, B, C,  5,  5);
+	r2(C, D, A, B,  9,  9);
+	r2(B, C, D, A, 13, 13);
+	r2(A, B, C, D,  2,  3);
+	r2(D, A, B, C,  6,  5);
+	r2(C, D, A, B, 10,  9);
+	r2(B, C, D, A, 14, 13);
+	r2(A, B, C, D,  3,  3);
+	r2(D, A, B, C,  7,  5);
+	r2(C, D, A, B, 11,  9);
+	r2(B, C, D, A, 15, 13);
+
+	md->s._32[0] += A;
+	md->s._32[1] += B;
+	md->s._32[2] += C;
+	md->s._32[3] += D;
+}
+
+static void round3(md4_t * md)
+{
+#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->block[i] + 0x6ED9EBA1, s))
+
+	uint32_t A = md->s._32[0];
+	uint32_t B = md->s._32[1];
+	uint32_t C = md->s._32[2];
+	uint32_t D = md->s._32[3];
+
+	r3(A, B, C, D,  0,  3);
+	r3(D, A, B, C,  8,  9);
+	r3(C, D, A, B,  4, 11);
+	r3(B, C, D, A, 12, 15);
+	r3(A, B, C, D,  2,  3);
+	r3(D, A, B, C, 10,  9);
+	r3(C, D, A, B,  6, 11);
+	r3(B, C, D, A, 14, 15);
+	r3(A, B, C, D,  1,  3);
+	r3(D, A, B, C,  9,  9);
+	r3(C, D, A, B,  5, 11);
+	r3(B, C, D, A, 13, 15);
+	r3(A, B, C, D,  3,  3);
+	r3(D, A, B, C, 11,  9);
+	r3(C, D, A, B,  7, 11);
+	r3(B, C, D, A, 15, 15);
+
+	md->s._32[0] += A;
+	md->s._32[1] += B;
+	md->s._32[2] += C;
+	md->s._32[3] += D;
+}
+
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
 	for (int i = 0; i < len; ++i) {
+		md->block[(md->count++) & 0x3f] = d[i];
 		if (0 == (md->count & 0x3f)) {
 			round1(md);
+			round2(md);
+			round3(md);
 		}
-		md->block[(md->count++) & 0x3f] = d[i];
 	}
 }
 

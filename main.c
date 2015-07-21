@@ -11,5 +11,6 @@ int main()
 	MD4_Init(&md);
 	MD4_Update(&md, test, strlen(test));
 	MD4_Final(&md, NULL, 0);
+	printf("1bee69a46ba811185c194762abaeae90\n");
 }
 
