@@ -57,7 +57,7 @@ static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
 
 static void round1(md4_t * md)
 {
-#define r1(A, B, C, D, i, s) (A = rol(A + f(B, C, D) + md->block[i], s))
+#define r1(A, B, C, D, i, s) (A = rol(A + f(B, C, D) + md->b._32[i], s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
@@ -92,7 +92,7 @@ static void round1(md4_t * md)
 
 static void round2(md4_t * md)
 {
-#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->block[i] + 0x5a827999, s))
+#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->b._32[i] + 0x5a827999, s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
@@ -123,7 +123,7 @@ static void round2(md4_t * md)
 
 static void round3(md4_t * md)
 {
-#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->block[i] + 0x6ED9EBA1, s))
+#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
@@ -156,8 +156,8 @@ static void round3(md4_t * md)
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
 	for (int i = 0; i < len; ++i) {
-		md->block[(md->count++) & 0x3f] = d[i];
-		if (0 == (md->count & 0x3f)) {
+		md->b._8[(md->count++) % sizeof(md->b)] = d[i];
+		if (0 == (md->count % sizeof(md->b))) {
 			round1(md);
 			round2(md);
 			round3(md);
@@ -183,8 +183,8 @@ void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 		0, 0, 0, 0, 0, 0, 0, 0,
 	};
 
-	MD4_Update(md, pad, compute_pad_len(md->count));
 	uint64_t bits = 8 * md->count;
+	MD4_Update(md, pad, compute_pad_len(md->count));
 	MD4_Update(md, (unsigned char*)&bits, sizeof(bits));
 
 	if (digest) {
