@@ -9,6 +9,7 @@ typedef struct {
 		uint32_t _32[4];
 		uint8_t _8[16];
 	} s;
+	uint8_t block[64];
 	uint64_t count;
 } md4_t;
 
