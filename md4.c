@@ -58,6 +58,8 @@ static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
 static void round1(md4_t * md)
 {
 #define r1(A, B, C, D, i, s) (A = rol(A + f(B, C, D) + md->b._32[i], s))
+#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->b._32[i] + 0x5a827999, s))
+#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
@@ -68,36 +70,18 @@ static void round1(md4_t * md)
 	r1(D, A, B, C,  1,  7);
 	r1(C, D, A, B,  2, 11);
 	r1(B, C, D, A,  3, 19);
-
 	r1(A, B, C, D,  4,  3);
 	r1(D, A, B, C,  5,  7);
 	r1(C, D, A, B,  6, 11);
 	r1(B, C, D, A,  7, 19);
-
 	r1(A, B, C, D,  8,  3);
 	r1(D, A, B, C,  9,  7);
 	r1(C, D, A, B, 10, 11);
 	r1(B, C, D, A, 11, 19);
-
 	r1(A, B, C, D, 12,  3);
 	r1(D, A, B, C, 13,  7);
 	r1(C, D, A, B, 14, 11);
 	r1(B, C, D, A, 15, 19);
-
-	md->s._32[0] += A;
-	md->s._32[1] += B;
-	md->s._32[2] += C;
-	md->s._32[3] += D;
-}
-
-static void round2(md4_t * md)
-{
-#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->b._32[i] + 0x5a827999, s))
-
-	uint32_t A = md->s._32[0];
-	uint32_t B = md->s._32[1];
-	uint32_t C = md->s._32[2];
-	uint32_t D = md->s._32[3];
 
 	r2(D, A, B, C,  4,  5);
 	r2(C, D, A, B,  8,  9);
@@ -114,21 +98,6 @@ static void round2(md4_t * md)
 	r2(D, A, B, C,  7,  5);
 	r2(C, D, A, B, 11,  9);
 	r2(B, C, D, A, 15, 13);
-
-	md->s._32[0] += A;
-	md->s._32[1] += B;
-	md->s._32[2] += C;
-	md->s._32[3] += D;
-}
-
-static void round3(md4_t * md)
-{
-#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
-
-	uint32_t A = md->s._32[0];
-	uint32_t B = md->s._32[1];
-	uint32_t C = md->s._32[2];
-	uint32_t D = md->s._32[3];
 
 	r3(A, B, C, D,  0,  3);
 	r3(D, A, B, C,  8,  9);
@@ -159,8 +128,6 @@ void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 		md->b._8[(md->count++) % sizeof(md->b)] = d[i];
 		if (0 == (md->count % sizeof(md->b))) {
 			round1(md);
-			round2(md);
-			round3(md);
 		}
 	}
 }
@@ -194,6 +161,6 @@ void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 	for (int i = 0; i < 16; ++i) {
 		printf("%02x", md->s._8[i]);
 	}
-	printf("\n");
+	printf(" %d\n", (int)md->count);
 }
 
