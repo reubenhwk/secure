@@ -83,6 +83,7 @@ static void round1(md4_t * md)
 	r1(C, D, A, B, 14, 11);
 	r1(B, C, D, A, 15, 19);
 
+	r2(A, B, C, D,  0,  3);
 	r2(D, A, B, C,  4,  5);
 	r2(C, D, A, B,  8,  9);
 	r2(B, C, D, A, 12, 13);
