@@ -37,19 +37,19 @@ static uint32_t rol(uint32_t x, int y)
 	return (x << y) | (x >> (32-y));
 }
 
-static uint32_t f(uint32_t x, uint32_t y, uint32_t z)
+static uint32_t ff(uint32_t x, uint32_t y, uint32_t z)
 {
 	/* XY v not(X)Z */
 	return x&y | (~x)&z;
 }
 
-static uint32_t g(uint32_t x, uint32_t y, uint32_t z)
+static uint32_t gg(uint32_t x, uint32_t y, uint32_t z)
 {
 	/* XY v XZ v YZ */
 	return x&y | x&z | y&z;
 }
 
-static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
+static uint32_t hh(uint32_t x, uint32_t y, uint32_t z)
 {
 	/* X xor Y xor Z */
 	return x ^ y ^ z;
@@ -57,9 +57,9 @@ static uint32_t h(uint32_t x, uint32_t y, uint32_t z)
 
 static void round1(md4_t * md)
 {
-#define r1(A, B, C, D, i, s) (A = rol(A + f(B, C, D) + md->b._32[i], s))
-#define r2(A, B, C, D, i, s) (A = rol(A + g(B, C, D) + md->b._32[i] + 0x5a827999, s))
-#define r3(A, B, C, D, i, s) (A = rol(A + h(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
+#define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + md->b._32[i], s))
+#define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + md->b._32[i] + 0x5a827999, s))
+#define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
