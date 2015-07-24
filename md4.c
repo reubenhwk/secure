@@ -32,31 +32,12 @@ md4_t * MD4_Init(md4_t * md)
 	return md;
 }
 
-static uint32_t rol(uint32_t x, int y)
+static inline void rounds(md4_t * md)
 {
-	return (x << y) | (x >> (32-y));
-}
-
-static uint32_t ff(uint32_t x, uint32_t y, uint32_t z)
-{
-	/* XY v not(X)Z */
-	return x&y | (~x)&z;
-}
-
-static uint32_t gg(uint32_t x, uint32_t y, uint32_t z)
-{
-	/* XY v XZ v YZ */
-	return x&y | x&z | y&z;
-}
-
-static uint32_t hh(uint32_t x, uint32_t y, uint32_t z)
-{
-	/* X xor Y xor Z */
-	return x ^ y ^ z;
-}
-
-static void round1(md4_t * md)
-{
+#define rol(x, y) ((x << y) | (x >> (32-y)))
+#define ff(x, y, z) (x&y | (~x)&z)
+#define gg(x, y, z) (x&y | x&z | y&z)
+#define hh(x, y, z) (x ^ y ^ z)
 #define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + md->b._32[i], s))
 #define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + md->b._32[i] + 0x5a827999, s))
 #define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
@@ -126,14 +107,14 @@ static void round1(md4_t * md)
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
 	for (int i = 0; i < len; ++i) {
-		md->b._8[(md->count++) % sizeof(md->b)] = d[i];
-		if (0 == (md->count % sizeof(md->b))) {
-			round1(md);
+		md->b._8[(md->count++) & 0x3f] = d[i];
+		if (0 == (md->count & 0x3f)) {
+			rounds(md);
 		}
 	}
 }
 
-static int compute_pad_len(int count)
+static inline int compute_pad_len(int count)
 {
 	return 64 - ((count + 8) & 0x3f);
 }
