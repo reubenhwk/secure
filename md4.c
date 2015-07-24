@@ -32,15 +32,21 @@ md4_t * MD4_Init(md4_t * md)
 	return md;
 }
 
-static inline void rounds(md4_t * md)
+static inline uint32_t rol(uint32_t x, int y)
 {
-#define rol(x, y) ((x << y) | (x >> (32-y)))
+	return (x << y) | (x >> (32-y));
+}
+
+static void rounds(md4_t * md, uint32_t const * restrict b)
+{
+
 #define ff(x, y, z) (x&y | (~x)&z)
 #define gg(x, y, z) (x&y | x&z | y&z)
 #define hh(x, y, z) (x ^ y ^ z)
-#define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + md->b._32[i], s))
-#define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + md->b._32[i] + 0x5a827999, s))
-#define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + md->b._32[i] + 0x6ED9EBA1, s))
+
+#define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + b[i], s))
+#define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + b[i] + 0x5a827999, s))
+#define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + b[i] + 0x6ED9EBA1, s))
 
 	uint32_t A = md->s._32[0];
 	uint32_t B = md->s._32[1];
@@ -106,12 +112,25 @@ static inline void rounds(md4_t * md)
 
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
-	for (int i = 0; i < len; ++i) {
-		md->b._8[(md->count++) & 0x3f] = d[i];
-		if (0 == (md->count & 0x3f)) {
-			rounds(md);
-		}
+	size_t used = (md->count & 0x3f);
+	size_t left = 0x40 - used;
+
+	if (left < len) {
+		memcpy(&md->b._8[used], d, left);
+		rounds(md, md->b._32);
+		d += left;
+		md->count += left;
+		len -= left;
 	}
+
+	while (len >= 0x40) {
+		rounds(md, (uint32_t *)d);
+		d += 0x40;
+		len -= 0x40;
+		md->count += 0x40;
+	}
+
+	memcpy(&md->b._8[0], d, len);
 }
 
 static inline int compute_pad_len(int count)
@@ -139,10 +158,5 @@ void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 	if (digest) {
 		memcpy(digest, (unsigned char *)md->s._8, len);
 	}
-
-	for (int i = 0; i < 16; ++i) {
-		printf("%02x", md->s._8[i]);
-	}
-	printf(" %d\n", (int)md->count);
 }
 
