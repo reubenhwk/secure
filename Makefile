@@ -1,11 +1,8 @@
 
 .PHONY: clean
 
-md4: main.o md4.o
-	$(CC) $^ -o $@
-
-%.o: %.c
-	$(CC) -c $< -std=gnu99 -g -O3
+md4: md4.c
+	$(CC) -o md4 -DTEST -std=gnu99 -O3 $^
 
 clean:
 	rm -f *.o md4
