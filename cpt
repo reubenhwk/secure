@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if test -z $1 ; then
+	exit 0
+fi
+
+(
+	set -u
+	export PATH=$(dirname $0):$PATH
+	cpt-$@
+)
+
