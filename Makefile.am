@@ -18,3 +18,6 @@ cpt_md4_SOURCES = \
 cpt_md5_SOURCES = \
 	md5/md5.c
 
+%.o: %.asm
+	$(AM_V_GEN)$(NASM) $(NASMFLAGS) $<
+
