@@ -11,13 +11,13 @@ bin_PROGRAMS = \
 	# end bin_PROGRAMS
 
 cpt_rc4_CPPFLAGS = \
-	-DASSEMBLY
+	@RC4_ASM_FLAGS@
 
 cpt_rc4_DEPENDENCIES = \
-	rc4/rc4-x64.o
+	@RC4_ASM@
 
 cpt_rc4_LDADD = \
-	rc4/rc4-x64.o
+	@RC4_ASM@
 
 cpt_rc4_SOURCES = \
 	rc4/rc4-common.c \

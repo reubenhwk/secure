@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef ASSEMBLY
+#ifndef RC4_ASM
 static inline unsigned char rc4_get_next_byte(rc4_ctx_t * const rc4)
 {
 	++rc4->i;
