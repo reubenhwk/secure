@@ -9,22 +9,28 @@ void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC ro
 	size_t used = (md->count & 0x3f);
 	size_t left = 0x40 - used;
 
-	if (left < len) {
-		memcpy(&md->b._8[used], d, left);
-		rounds(md, md->b._32, 1);
-		d += left;
-		md->count += left;
-		len -= left;
+	if (left > 0) {
+		size_t count = left < len ? left : len;
+		memcpy(&md->b._8[used], d, count);
+		len -= count;
+		d += count;
+		md->count += count;
 	}
 
-	if (len >= 64) {
-		rounds(md, (uint32_t *)d, (len / 0x40));
-		d += 0x40 * (len / 0x40);
-		len -= 0x40 * (len / 0x40);
-		md->count += 0x40 * (len / 0x40);
+	if (0x40 == md->count) {
+		rounds(md, md->b._8, 0x40);
 	}
 
-	memcpy(&md->b._8[0], d, len);
+	while (len > 0x40) {
+		rounds(md, d, 0x40);
+		len -= 0x40;
+		d += 0x40;
+		md->count += 0x40;
+	}
+
+	used = (md->count & 0x3f);
+	memcpy(&md->b._8[used], d, len);
+	md->count += len;
 }
 
 static inline int compute_pad_len(int count)

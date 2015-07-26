@@ -164,11 +164,13 @@ int main()
 	md5_t ctx;
 	MD5_Init(&ctx);
 
+#if 0
 	char buffer[4*1024];
 	int rc;
 	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
 		MD5_Update(&ctx, (unsigned char*)buffer, rc);
 	}
+#endif
 
 	unsigned char dgst[16];
 	MD5_Final(&ctx, dgst, 16);
