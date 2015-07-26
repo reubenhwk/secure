@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef ASSEMBLY
 static inline unsigned char rc4_get_next_byte(rc4_ctx_t * const rc4)
 {
 	++rc4->i;
@@ -34,6 +35,7 @@ void rc4_crypt(rc4_ctx_t * rc4, void * _buffer, size_t len)
 		*buffer++ ^= rc4_get_next_byte(rc4);
 	}
 }
+#endif
 
 #ifdef TEST
 int main(void)
