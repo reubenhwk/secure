@@ -24,10 +24,12 @@ cpt_rc4_SOURCES = \
 	rc4/rc4.c
 
 cpt_md4_SOURCES = \
+	md/md.c \
 	md4/md4.c
 
 
 cpt_md5_SOURCES = \
+	md/md.c \
 	md5/md5.c
 
 
