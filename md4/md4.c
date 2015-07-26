@@ -37,7 +37,7 @@ static inline uint32_t rol(uint32_t x, int y)
 	return (x << y) | (x >> (32-y));
 }
 
-static inline void rounds(md4_t * md, uint32_t const * restrict b, size_t count)
+static inline void rounds(md4_t * md, uint32_t const * b, size_t count)
 {
 
 #define ff(x, y, z) (x&y | (~x)&z)
