@@ -26,7 +26,7 @@ rc4_crypt:
 
 	push	rbx
 
-	mov	r8, rdx
+	lea	r8, [rsi + rdx]
 
 	xor	eax, eax
 	xor	ebx, ebx
@@ -35,25 +35,19 @@ rc4_crypt:
 
 	mov	al, [rdi + arc4.i]
 	mov	bl, [rdi + arc4.j]
-	dec	rsi
 top:
 	inc	al
-	inc	rsi
-
-	add	bl, byte [rdi + arc4.s + rax]
-	mov	cl, byte [rdi + arc4.s + rax]
-	mov	dl, byte [rdi + arc4.s + rbx]
-
-	mov	byte [rdi + arc4.s + rbx], cl
-	mov	byte [rdi + arc4.s + rax], dl
-
+	add	bl, byte [rdi + rax]
+	mov	cl, byte [rdi + rax]
+	mov	dl, byte [rdi + rbx]
+	mov	byte [rdi + rbx], cl
+	mov	byte [rdi + rax], dl
 	add	cl, dl
-	mov	cl, byte [rdi + arc4.s + rcx]
-
+	mov	cl, byte [rdi + rcx]
 	xor	byte [rsi], cl
-
-	dec	r8
-	jg	top
+	inc	rsi
+	cmp	rsi, r8
+	jnz	top
 
 	mov	byte [rdi + arc4.i], al
 	mov	byte [rdi + arc4.j], bl
