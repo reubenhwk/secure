@@ -9,7 +9,7 @@ static inline uint32_t rol(uint32_t x, int y)
 	return (x << y) | (x >> (32-y));
 }
 
-static inline void rounds(md4_t * md, uint32_t const * b, size_t count)
+static inline void md4_round(md4_t * md, uint32_t const * b)
 {
 
 #define ff(x, y, z) (x&y | (~x)&z)
@@ -25,73 +25,71 @@ static inline void rounds(md4_t * md, uint32_t const * b, size_t count)
 	uint32_t C = md->s._32[2];
 	uint32_t D = md->s._32[3];
 
-	while (count--) {
-		r1(A, B, C, D,  0,  3);
-		r1(D, A, B, C,  1,  7);
-		r1(C, D, A, B,  2, 11);
-		r1(B, C, D, A,  3, 19);
-		r1(A, B, C, D,  4,  3);
-		r1(D, A, B, C,  5,  7);
-		r1(C, D, A, B,  6, 11);
-		r1(B, C, D, A,  7, 19);
-		r1(A, B, C, D,  8,  3);
-		r1(D, A, B, C,  9,  7);
-		r1(C, D, A, B, 10, 11);
-		r1(B, C, D, A, 11, 19);
-		r1(A, B, C, D, 12,  3);
-		r1(D, A, B, C, 13,  7);
-		r1(C, D, A, B, 14, 11);
-		r1(B, C, D, A, 15, 19);
+	r1(A, B, C, D,  0,  3);
+	r1(D, A, B, C,  1,  7);
+	r1(C, D, A, B,  2, 11);
+	r1(B, C, D, A,  3, 19);
+	r1(A, B, C, D,  4,  3);
+	r1(D, A, B, C,  5,  7);
+	r1(C, D, A, B,  6, 11);
+	r1(B, C, D, A,  7, 19);
+	r1(A, B, C, D,  8,  3);
+	r1(D, A, B, C,  9,  7);
+	r1(C, D, A, B, 10, 11);
+	r1(B, C, D, A, 11, 19);
+	r1(A, B, C, D, 12,  3);
+	r1(D, A, B, C, 13,  7);
+	r1(C, D, A, B, 14, 11);
+	r1(B, C, D, A, 15, 19);
 
-		r2(A, B, C, D,  0,  3);
-		r2(D, A, B, C,  4,  5);
-		r2(C, D, A, B,  8,  9);
-		r2(B, C, D, A, 12, 13);
-		r2(A, B, C, D,  1,  3);
-		r2(D, A, B, C,  5,  5);
-		r2(C, D, A, B,  9,  9);
-		r2(B, C, D, A, 13, 13);
-		r2(A, B, C, D,  2,  3);
-		r2(D, A, B, C,  6,  5);
-		r2(C, D, A, B, 10,  9);
-		r2(B, C, D, A, 14, 13);
-		r2(A, B, C, D,  3,  3);
-		r2(D, A, B, C,  7,  5);
-		r2(C, D, A, B, 11,  9);
-		r2(B, C, D, A, 15, 13);
+	r2(A, B, C, D,  0,  3);
+	r2(D, A, B, C,  4,  5);
+	r2(C, D, A, B,  8,  9);
+	r2(B, C, D, A, 12, 13);
+	r2(A, B, C, D,  1,  3);
+	r2(D, A, B, C,  5,  5);
+	r2(C, D, A, B,  9,  9);
+	r2(B, C, D, A, 13, 13);
+	r2(A, B, C, D,  2,  3);
+	r2(D, A, B, C,  6,  5);
+	r2(C, D, A, B, 10,  9);
+	r2(B, C, D, A, 14, 13);
+	r2(A, B, C, D,  3,  3);
+	r2(D, A, B, C,  7,  5);
+	r2(C, D, A, B, 11,  9);
+	r2(B, C, D, A, 15, 13);
 
-		r3(A, B, C, D,  0,  3);
-		r3(D, A, B, C,  8,  9);
-		r3(C, D, A, B,  4, 11);
-		r3(B, C, D, A, 12, 15);
-		r3(A, B, C, D,  2,  3);
-		r3(D, A, B, C, 10,  9);
-		r3(C, D, A, B,  6, 11);
-		r3(B, C, D, A, 14, 15);
-		r3(A, B, C, D,  1,  3);
-		r3(D, A, B, C,  9,  9);
-		r3(C, D, A, B,  5, 11);
-		r3(B, C, D, A, 13, 15);
-		r3(A, B, C, D,  3,  3);
-		r3(D, A, B, C, 11,  9);
-		r3(C, D, A, B,  7, 11);
-		r3(B, C, D, A, 15, 15);
+	r3(A, B, C, D,  0,  3);
+	r3(D, A, B, C,  8,  9);
+	r3(C, D, A, B,  4, 11);
+	r3(B, C, D, A, 12, 15);
+	r3(A, B, C, D,  2,  3);
+	r3(D, A, B, C, 10,  9);
+	r3(C, D, A, B,  6, 11);
+	r3(B, C, D, A, 14, 15);
+	r3(A, B, C, D,  1,  3);
+	r3(D, A, B, C,  9,  9);
+	r3(C, D, A, B,  5, 11);
+	r3(B, C, D, A, 13, 15);
+	r3(A, B, C, D,  3,  3);
+	r3(D, A, B, C, 11,  9);
+	r3(C, D, A, B,  7, 11);
+	r3(B, C, D, A, 15, 15);
 
-		A = md->s._32[0] += A;
-		B = md->s._32[1] += B;
-		C = md->s._32[2] += C;
-		D = md->s._32[3] += D;
-	}
+	md->s._32[0] += A;
+	md->s._32[1] += B;
+	md->s._32[2] += C;
+	md->s._32[3] += D;
 }
 
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
-	MD_Update(md, d, len, rounds);
+	MD_Update(md, d, len, md4_round);
 }
 
 void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 {
-	MD_Final(md, digest, len, rounds);
+	MD_Final(md, digest, len, md4_round);
 }
 
 #ifdef TEST

@@ -32,7 +32,7 @@ md_t * MD_Init(md_t * md)
 	return md;
 }
 
-void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC rounds)
+void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC md_round)
 {
 	size_t const used = (md->count & 0x3f);
 	if (used > 0) {
@@ -44,12 +44,12 @@ void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC ro
 		md->count += count;
 
 		if (0 == (md->count & 0x3f)) {
-			rounds(md, md->b._32, 1);
+			md_round(md, md->b._32);
 		}
 	}
 
 	while (len >= 0x40) {
-		rounds(md, (uint32_t const*)d, 1);
+		md_round(md, (uint32_t const*)d);
 		len -= 0x40;
 		d += 0x40;
 		md->count += 0x40;
@@ -64,7 +64,7 @@ static inline int compute_pad_len(int count)
 	return 64 - ((count + 8) & 0x3f);
 }
 
-void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC rounds)
+void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC md_round)
 {
 	static uint8_t const pad[64] = {
 		0x80, 0, 0, 0, 0, 0, 0, 0,
@@ -78,8 +78,8 @@ void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC roun
 	};
 
 	uint64_t bits = 8 * md->count;
-	MD_Update(md, pad, compute_pad_len(md->count), rounds);
-	MD_Update(md, (unsigned char*)&bits, sizeof(bits), rounds);
+	MD_Update(md, pad, compute_pad_len(md->count), md_round);
+	MD_Update(md, (unsigned char*)&bits, sizeof(bits), md_round);
 
 	if (digest) {
 		memcpy(digest, (unsigned char *)md->s._8, len);

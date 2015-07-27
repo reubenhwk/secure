@@ -16,7 +16,7 @@ typedef struct {
 	uint64_t count;
 } md_t;
 
-typedef void (*MD_ROUNDS_PROC)(md_t*, uint32_t const*, size_t);
+typedef void (*MD_ROUNDS_PROC)(md_t*, uint32_t const*);
 
 md_t * MD_Init(md_t * md);
 void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC);
