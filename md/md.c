@@ -34,30 +34,28 @@ md_t * MD_Init(md_t * md)
 
 void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC rounds)
 {
-	size_t used = (md->count & 0x3f);
-	size_t left = 0x40 - used;
-
-	if (left > 0) {
-		size_t count = left < len ? left : len;
+	size_t const used = (md->count & 0x3f);
+	if (used > 0) {
+		size_t const left = 0x40 - used;
+		size_t const count = left < len ? left : len;
 		memcpy(&md->b._8[used], d, count);
 		len -= count;
 		d += count;
 		md->count += count;
+
+		if (0 == (md->count & 0x3f)) {
+			rounds(md, md->b._32, 1);
+		}
 	}
 
-	if (0 == (md->count & 0x3f)) {
-		rounds(md, md->b._32, 1);
-	}
-
-	while (len > 0x40) {
+	while (len >= 0x40) {
 		rounds(md, (uint32_t const*)d, 1);
 		len -= 0x40;
 		d += 0x40;
 		md->count += 0x40;
 	}
 
-	used = (md->count & 0x3f);
-	memcpy(&md->b._8[used], d, len);
+	memcpy(&md->b._8[0], d, len);
 	md->count += len;
 }
 
