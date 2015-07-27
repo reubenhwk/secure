@@ -1,8 +1,8 @@
 
 STRUC arc4
 .s: RESB 256
-.i: RESD 1
-.j: RESD 1
+.i: RESB 1
+.j: RESB 1
 ENDSTRUC
 
 
