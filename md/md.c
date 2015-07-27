@@ -17,12 +17,12 @@ void MD_Update(md_t * md, unsigned char const * d, size_t len, MD_ROUNDS_PROC ro
 		md->count += count;
 	}
 
-	if (0x40 == md->count) {
-		rounds(md, md->b._32, 0x40);
+	if (0 == (md->count & 0x3f)) {
+		rounds(md, md->b._32, 1);
 	}
 
 	while (len > 0x40) {
-		rounds(md, (uint32_t const*)d, 0x40);
+		rounds(md, (uint32_t const*)d, 1);
 		len -= 0x40;
 		d += 0x40;
 		md->count += 0x40;

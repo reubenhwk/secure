@@ -128,13 +128,11 @@ int main()
 	md4_t ctx;
 	MD4_Init(&ctx);
 
-#if 0
 	char buffer[4*1024];
 	int rc;
 	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
 		MD4_Update(&ctx, (unsigned char*)buffer, rc);
 	}
-#endif
 
 	unsigned char dgst[16];
 	MD4_Final(&ctx, dgst, 16);
