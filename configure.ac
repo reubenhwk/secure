@@ -14,10 +14,12 @@ AX_PROG_NASM([nasm_avail="no"])
 
 AC_DEFINE(TEST)
 
-RC4_ASM="rc4/rc4-x64.o"
-RC4_ASM_FLAGS="-DRC4_ASM"
-AC_SUBST([RC4_ASM])
-AC_SUBST([RC4_ASM_FLAGS])
+if test -z "$nasm_avail" ; then
+	RC4_ASM="rc4/rc4-x64.o"
+	RC4_ASM_FLAGS="-DRC4_ASM"
+	AC_SUBST([RC4_ASM])
+	AC_SUBST([RC4_ASM_FLAGS])
+fi
 
 AC_OUTPUT(
 	Makefile
