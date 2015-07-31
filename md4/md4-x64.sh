@@ -2,22 +2,46 @@
 
 #define ff(w, x, y, z) (x&y | (~x)&z)
 ff () {
+	echo "	;ff($1, $2, $3, $4) ($2&$3 | ~$2&$4)"
 	echo "	mov	$1, $2"
 	echo "	and	$1, $3"
-	echo "	not	$2"
-	echo "	and	$2, $4"
-	echo "	or	$1, $2"
+	echo "	mov	r9d, $2"
+	echo "	not	r9d"
+	echo "	and	r9d, $4"
+	echo "	or	$1, r9d"
+	echo "	;end ff"
 }
+#define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + b[i] + 0x00000000, s))
+r1 () {
+	echo "	;r1"
+	ff r8d $2 $3 $4
+	echo "	add	$1, r8d"
+	echo "	add	$1, dword [rsi + $5*4]"
+	echo "	rol	$1, $6"
+	echo "	;end r1"
+}
+
 
 #define gg(w, x, y, z) (x&y | x&z | y&z)
 gg () {
 	echo "	mov	$1, $2"
+	echo "	mov	r9d, $2"
+	echo "	mov	r10d, $3"
 	echo "	and	$1, $3"
-	echo "	and	$2, $4"
-	echo "	and	$3, $4"
-	echo "	or	$1, $2"
-	echo "	or	$1, $3"
+	echo "	and	r9d, $4"
+	echo "	and	r10d, $4"
+	echo "	or	$1, r9d"
+	echo "	or	$1, r10d"
 }
+#define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + b[i] + 0x5A827999, s))
+r2 () {
+	gg r8d $2 $3 $4
+	echo "	add	$1, r8d"
+	echo "	add	$1, dword [rsi + $5*4]"
+	echo "	add	$1, 0x5A827999"
+	echo "	rol	$1, $6"
+}
+
 
 #define hh(w, x, y, z) (x ^ y ^ z)
 hh () {
@@ -25,31 +49,11 @@ hh () {
 	echo "	xor	$1, $3"
 	echo "	xor	$1, $4"
 }
-
-
-#define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + b[i] + 0x00000000, s))
-#define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + b[i] + 0x5A827999, s))
 #define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + b[i] + 0x6ED9EBA1, s))
-
-r1 () {
-	ff r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, [rsi + $5]"
-	echo "	rol	$1, $6"
-}
-
-r2 () {
-	gg r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, [rsi + $5]"
-	echo "	add	$1, 0x5A827999"
-	echo "	rol	$1, $6"
-}
-
 r3 () {
 	hh r8d $2 $3 $4
 	echo "	add	$1, r8d"
-	echo "	add	$1, [rsi + $5]"
+	echo "	add	$1, dword [rsi + $5*4]"
 	echo "	add	$1, 0x6ED9EBA1"
 	echo "	rol	$1, $6"
 }
@@ -89,6 +93,7 @@ echo "md4_round:"
 echo
 echo "	;	round 1"
 echo "	push	rbx"
+echo "	push	r10"
 echo
 echo "	mov	eax, dword [rdi + 0]"
 echo "	mov	ebx, dword [rdi + 4]"
@@ -157,6 +162,7 @@ echo "	add	dword [rdi + 8], ecx"
 echo "	add	dword [rdi + 12], edx"
 
 echo
+echo "	pop	r10"
 echo "	pop	rbx"
 echo
 echo "	ret"
