@@ -1,5 +1,13 @@
 #!/bin/bash
 
+round () {
+	echo "	add	r8d, $1"
+	echo "	add	r8d, dword [rsi + $5*4]"
+	echo "	add	r8d, $7"
+	echo "	rol	r8d, $6"
+	echo "	add	r8d, $2"
+	echo "	mov	$1, r8d"
+}
 
 #define ff(w, x, y, z) (x&y | (~x)&z)
 ff () {
@@ -13,10 +21,7 @@ ff () {
 #define r1(a, b, c, d, k, s, i) (a = b + rol(a + ff(b, c, d) + k + i, s))
 r1 () {
 	ff r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, $7"
-	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	rol	$1, $6"
+	round $@
 }
 
 
@@ -32,10 +37,7 @@ gg () {
 #define r2(a, b, c, d, k, s, i) (a = b + rol(a + gg(b, c, d) + k + i, s))
 r2 () {
 	gg r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, $7"
-	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	rol	$1, $6"
+	round $@
 }
 
 
@@ -48,10 +50,7 @@ hh () {
 #define r3(a, b, c, d, k, s, i) (a = b + rol(a + hh(b, c, d) + k + i, s))
 r3 () {
 	hh r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, $7"
-	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	rol	$1, $6"
+	round $@
 }
 
 #define ii(w, x, y, z) (y ^ (x | (~z)))
@@ -64,10 +63,7 @@ ii () {
 #define r4(a, b, c, d, k, s, i) (a = b + rol(a + ii(b, c, d) + k + i, s))
 r4 () {
 	ii r8d $2 $3 $4
-	echo "	add	$1, r8d"
-	echo "	add	$1, $7"
-	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	rol	$1, $6"
+	round $@
 }
 
 S11=7
