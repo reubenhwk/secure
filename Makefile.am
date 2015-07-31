@@ -23,6 +23,15 @@ cpt_rc4_SOURCES = \
 	rc4/rc4-common.c \
 	rc4/rc4.c
 
+cpt_md4_CPPFLAGS = \
+	@MD4_ASM_FLAGS@
+
+cpt_md4_DEPENDENCIES = \
+	@MD4_ASM@
+
+cpt_md4_LDADD = \
+	@MD4_ASM@
+
 cpt_md4_SOURCES = \
 	md/md.c \
 	md4/md4.c

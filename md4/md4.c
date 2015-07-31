@@ -9,7 +9,8 @@ static inline uint32_t rol(uint32_t x, int y)
 	return (x << y) | (x >> (32-y));
 }
 
-static inline void md4_round(md4_t * md, uint32_t const * b)
+#ifndef MD4_ASM
+void md4_round(md4_t * md, uint32_t const * b)
 {
 
 #define ff(x, y, z) (x&y | (~x)&z)
@@ -81,6 +82,7 @@ static inline void md4_round(md4_t * md, uint32_t const * b)
 	md->s._32[2] += C;
 	md->s._32[3] += D;
 }
+#endif
 
 void MD4_Update(md4_t * md, unsigned char const * d, size_t len)
 {
