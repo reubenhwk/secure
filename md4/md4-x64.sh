@@ -87,7 +87,6 @@ echo "	global md4_round"
 echo
 echo "md4_round:"
 echo
-echo "	;	round 1"
 echo "	push	rbx"
 echo "	push	r10"
 echo
@@ -96,6 +95,8 @@ echo "	mov	ebx, dword [rdi + 4]"
 echo "	mov	ecx, dword [rdi + 8]"
 echo "	mov	edx, dword [rdi + 12]"
 echo
+
+echo "	;	round 1"
 r1 eax ebx ecx edx  0 $S11
 r1 edx eax ebx ecx  1 $S12
 r1 ecx edx eax ebx  2 $S13
