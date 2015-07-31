@@ -5,6 +5,7 @@ AUTOMAKE_OPTIONS = 1.2 foreign subdir-objects
 	$(AM_V_GEN)nasm -felf64 $<
 
 bin_PROGRAMS = \
+	cpt-md4-c \
 	cpt-md4 \
 	cpt-md5 \
 	cpt-rc4 \
@@ -39,6 +40,9 @@ cpt_md4_SOURCES = \
 	md/md.c \
 	md4/md4.c
 
+cpt_md4_c_SOURCES = \
+	md/md.c \
+	md4/md4.c
 
 cpt_md5_SOURCES = \
 	md/md.c \
