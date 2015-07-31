@@ -2,23 +2,19 @@
 
 #define ff(w, x, y, z) (x&y | (~x)&z)
 ff () {
-	echo "	;ff($1, $2, $3, $4) ($2&$3 | ~$2&$4)"
 	echo "	mov	$1, $2"
 	echo "	and	$1, $3"
 	echo "	mov	r9d, $2"
 	echo "	not	r9d"
 	echo "	and	r9d, $4"
 	echo "	or	$1, r9d"
-	echo "	;end ff"
 }
 #define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + b[i] + 0x00000000, s))
 r1 () {
-	echo "	;r1"
 	ff r8d $2 $3 $4
 	echo "	add	$1, r8d"
 	echo "	add	$1, dword [rsi + $5*4]"
 	echo "	rol	$1, $6"
-	echo "	;end r1"
 }
 
 
