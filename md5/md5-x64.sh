@@ -1,19 +1,17 @@
 #!/bin/bash
 
 round () {
-	echo "	add	r8d, $1"
+	echo "	lea	r8d, [r8d + $7 + $1]"
 	echo "	add	r8d, dword [rsi + $5*4]"
-	echo "	add	r8d, $7"
 	echo "	rol	r8d, $6"
-	echo "	add	r8d, $2"
-	echo "	mov	$1, r8d"
+	echo "	lea	$1, [r8d + $2]"
 }
 
 #define ff(w, x, y, z) (x&y | (~x)&z)
 ff () {
 	echo "	mov	$1, $2"
-	echo "	and	$1, $3"
 	echo "	mov	r9d, $2"
+	echo "	and	$1, $3"
 	echo "	not	r9d"
 	echo "	and	r9d, $4"
 	echo "	or	$1, r9d"
@@ -28,8 +26,8 @@ r1 () {
 #define gg(w, x, y, z) ((x&z) | (y&(~z)))
 gg () {
 	echo "	mov	$1, $2"
-	echo "	and	$1, $4"
 	echo "	mov	r9d, $4"
+	echo "	and	$1, $4"
 	echo "	not	r9d"
 	echo "	and	r9d, $3"
 	echo "	or	$1, r9d"
