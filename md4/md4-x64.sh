@@ -67,7 +67,20 @@ S32=9
 S33=11
 S34=15
 
+#typedef struct {
+#	union {
+#		uint32_t _32[4];
+#		uint8_t _8[16];
+#	} s;
+#	union {
+#		uint32_t _32[16];
+#		uint8_t _8[64];
+#	} b;
+#	uint64_t count;
+#} md_t;
 
+
+#;  RDI, RSI, RDX, RCX, R8, and R9
 echo
 echo "section	.text"
 echo "	global md4_round"
@@ -76,6 +89,12 @@ echo "md4_round:"
 echo
 echo "	;	round 1"
 echo "	push	rbx"
+echo
+echo "	mov	eax, dword [rdi + 0]"
+echo "	mov	ebx, dword [rdi + 4]"
+echo "	mov	ecx, dword [rdi + 8]"
+echo "	mov	edx, dword [rdi + 12]"
+echo
 r1 eax ebx ecx edx  0 $S11
 r1 edx eax ebx ecx  1 $S12
 r1 ecx edx eax ebx  2 $S13
@@ -130,6 +149,14 @@ r3 eax ebx ecx edx  3 $S21
 r3 edx eax ebx ecx 11 $S22
 r3 ecx edx eax ebx  7 $S23
 r3 ebx ecx edx eax 15 $S24
+
+echo
+echo "	add	dword [rdi + 0], eax"
+echo "	add	dword [rdi + 4], ebx"
+echo "	add	dword [rdi + 8], ecx"
+echo "	add	dword [rdi + 12], edx"
+
+echo
 echo "	pop	rbx"
 echo
 echo "	ret"
