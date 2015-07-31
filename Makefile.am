@@ -7,6 +7,7 @@ AUTOMAKE_OPTIONS = 1.2 foreign subdir-objects
 bin_PROGRAMS = \
 	cpt-md4-c \
 	cpt-md4 \
+	cpt-md5-c \
 	cpt-md5 \
 	cpt-rc4 \
 	# end bin_PROGRAMS
@@ -44,7 +45,23 @@ cpt_md4_c_SOURCES = \
 	md/md.c \
 	md4/md4.c
 
+md5/md5-x64.asm: md5/md5-x64.sh
+	$(AM_V_GEN)$< > $@
+
+cpt_md5_CPPFLAGS = \
+	@MD5_ASM_FLAGS@
+
+cpt_md5_DEPENDENCIES = \
+	@MD5_ASM@
+
+cpt_md5_LDADD = \
+	@MD5_ASM@
+
 cpt_md5_SOURCES = \
+	md/md.c \
+	md5/md5.c
+
+cpt_md5_c_SOURCES = \
 	md/md.c \
 	md5/md5.c
 

@@ -24,6 +24,11 @@ if test -z "$nasm_avail" ; then
 	MD4_ASM_FLAGS="-DMD4_ASM"
 	AC_SUBST([MD4_ASM])
 	AC_SUBST([MD4_ASM_FLAGS])
+
+	MD5_ASM="md5/md5-x64.o"
+	MD5_ASM_FLAGS="-DMD5_ASM"
+	AC_SUBST([MD5_ASM])
+	AC_SUBST([MD5_ASM_FLAGS])
 fi
 
 AC_OUTPUT(

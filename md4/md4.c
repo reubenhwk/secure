@@ -4,12 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 
+void md4_round(md4_t * md, uint32_t const * b);
+
+#ifndef MD4_ASM
 static inline uint32_t rol(uint32_t x, int y)
 {
 	return (x << y) | (x >> (32-y));
 }
 
-#ifndef MD4_ASM
 void md4_round(md4_t * md, uint32_t const * b)
 {
 
