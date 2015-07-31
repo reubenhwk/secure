@@ -134,22 +134,22 @@ r2 ebx ecx edx eax 15 $S24
 
 echo
 echo "	;	round 3"
-r3 eax ebx ecx edx  0 $S21
-r3 edx eax ebx ecx  8 $S22
-r3 ecx edx eax ebx  4 $S23
-r3 ebx ecx edx eax 12 $S24
-r3 eax ebx ecx edx  2 $S21
-r3 edx eax ebx ecx 10 $S22
-r3 ecx edx eax ebx  6 $S23
-r3 ebx ecx edx eax 14 $S24
-r3 eax ebx ecx edx  1 $S21
-r3 edx eax ebx ecx  9 $S22
-r3 ecx edx eax ebx  5 $S23
-r3 ebx ecx edx eax 13 $S24
-r3 eax ebx ecx edx  3 $S21
-r3 edx eax ebx ecx 11 $S22
-r3 ecx edx eax ebx  7 $S23
-r3 ebx ecx edx eax 15 $S24
+r3 eax ebx ecx edx  0 $S31
+r3 edx eax ebx ecx  8 $S32
+r3 ecx edx eax ebx  4 $S33
+r3 ebx ecx edx eax 12 $S34
+r3 eax ebx ecx edx  2 $S31
+r3 edx eax ebx ecx 10 $S32
+r3 ecx edx eax ebx  6 $S33
+r3 ebx ecx edx eax 14 $S34
+r3 eax ebx ecx edx  1 $S31
+r3 edx eax ebx ecx  9 $S32
+r3 ecx edx eax ebx  5 $S33
+r3 ebx ecx edx eax 13 $S34
+r3 eax ebx ecx edx  3 $S31
+r3 edx eax ebx ecx 11 $S32
+r3 ecx edx eax ebx  7 $S33
+r3 ebx ecx edx eax 15 $S34
 
 echo
 echo "	add	dword [rdi + 0], eax"
