@@ -20,7 +20,6 @@ if test -z "$nasm_avail" ; then
 	AC_SUBST([RC4_ASM])
 	AC_SUBST([RC4_ASM_FLAGS])
 
-	md4/md4-x64.sh > md4/md4-x64.asm
 	MD4_ASM="md4/md4-x64.o"
 	MD4_ASM_FLAGS="-DMD4_ASM"
 	AC_SUBST([MD4_ASM])

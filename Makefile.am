@@ -23,6 +23,9 @@ cpt_rc4_SOURCES = \
 	rc4/rc4-common.c \
 	rc4/rc4.c
 
+md4/md4-x64.asm: md4/md4-x64.sh
+	$(AM_V_GEN)$< > $@
+
 cpt_md4_CPPFLAGS = \
 	@MD4_ASM_FLAGS@
 
