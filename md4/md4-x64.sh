@@ -12,8 +12,8 @@ ff () {
 #define r1(A, B, C, D, i, s) (A = rol(A + ff(B, C, D) + b[i] + 0x00000000, s))
 r1 () {
 	ff r8d $2 $3 $4
-	echo "	add	$1, r8d"
 	echo "	add	$1, dword [rsi + $5*4]"
+	echo "	lea	$1, [$1 + r8d]"
 	echo "	rol	$1, $6"
 }
 
@@ -32,9 +32,8 @@ gg () {
 #define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + b[i] + 0x5A827999, s))
 r2 () {
 	gg r8d $2 $3 $4
-	echo "	add	$1, r8d"
 	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	add	$1, 0x5A827999"
+	echo "	lea	$1, [$1 + r8d + 0x5A827999]"
 	echo "	rol	$1, $6"
 }
 
@@ -48,9 +47,8 @@ hh () {
 #define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + b[i] + 0x6ED9EBA1, s))
 r3 () {
 	hh r8d $2 $3 $4
-	echo "	add	$1, r8d"
 	echo "	add	$1, dword [rsi + $5*4]"
-	echo "	add	$1, 0x6ED9EBA1"
+	echo "	lea	$1, [$1 + r8d + 0x6ED9EBA1]"
 	echo "	rol	$1, $6"
 }
 
