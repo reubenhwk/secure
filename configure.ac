@@ -38,7 +38,10 @@ esac
 AC_SUBST([NASMFLAGS])
 
 if test -z "$nasm_avail" ; then
-	if test "$enable_rc4_asm" != "no" ; then
+	changequote(<<,>>)
+	if [ "$enable_rc4_asm" != "no" ] && \
+		[[ -x rc4/rc4-$target_cpu.sh || -f rc4/rc4-$target_cpu.asm ]] ; then
+	changequote([,])
 		RC4_ASM="rc4/rc4-x86_64.o"
 		RC4_ASM_FLAGS="-DRC4_ASM"
 		AC_SUBST([RC4_ASM])
@@ -46,7 +49,10 @@ if test -z "$nasm_avail" ; then
 		AC_MSG_NOTICE([using rc4 assembly])
 	fi
 
-	if test "$enable_md4_asm" != "no" ; then
+	changequote(<<,>>)
+	if [ "$enable_md4_asm" != "no" ] && \
+		[[ -x md4/md4-$target_cpu.sh || -f md4/md4-$target_cpu.asm ]] ; then
+	changequote([,])
 		MD4_ASM="md4/md4-x86_64.o"
 		MD4_ASM_FLAGS="-DMD4_ASM"
 		AC_SUBST([MD4_ASM])
@@ -54,7 +60,10 @@ if test -z "$nasm_avail" ; then
 		AC_MSG_NOTICE([using md4 assembly])
 	fi
 
-	if test "$enable_md5_asm" != "no" ; then
+	changequote(<<,>>)
+	if [ "$enable_md5_asm" != "no" ] && \
+		[[ -x md5/md5-$target_cpu.sh || -f md5/md5-$target_cpu.asm ]] ; then
+	changequote([,])
 		MD5_ASM="md5/md5-x86_64.o"
 		MD5_ASM_FLAGS="-DMD5_ASM"
 		AC_SUBST([MD5_ASM])
