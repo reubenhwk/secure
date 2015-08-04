@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS = 1.2 foreign subdir-objects
 
 %.o: %.asm
-	$(AM_V_GEN)nasm -felf64 $<
+	$(AM_V_GEN)nasm @NASMFLAGS@ $<
 
 bin_PROGRAMS = \
 	cpt-md4 \
@@ -23,7 +23,7 @@ cpt_rc4_SOURCES = \
 	rc4/rc4-common.c \
 	rc4/rc4.c
 
-md4/md4-x64.asm: md4/md4-x64.sh
+md4/md4-x86_64.asm: md4/md4-x86_64.sh
 	$(AM_V_GEN)$< > $@
 
 cpt_md4_CPPFLAGS = \
@@ -39,7 +39,7 @@ cpt_md4_SOURCES = \
 	md/md.c \
 	md4/md4.c
 
-md5/md5-x64.asm: md5/md5-x64.sh
+md5/md5-x86_64.asm: md5/md5-x86_64.sh
 	$(AM_V_GEN)$< > $@
 
 cpt_md5_CPPFLAGS = \
