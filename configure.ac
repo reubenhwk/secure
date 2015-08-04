@@ -14,21 +14,51 @@ AX_PROG_NASM([nasm_avail="no"])
 
 AC_DEFINE(TEST)
 
+AC_ARG_ENABLE([rc4-asm],
+  AS_HELP_STRING([--enable-rc4-asm],
+    [use rc4 assembly language implementation (if abailable)]),
+)
+
+AC_ARG_ENABLE([md4-asm],
+  AS_HELP_STRING([--enable-md4-asm],
+    [use md4 assembly language implementation (if abailable)]),
+)
+
+AC_ARG_ENABLE([md5-asm],
+  AS_HELP_STRING([--enable-md5-asm],
+    [use md5 assembly language implementation (if abailable)]),
+)
+
 if test -z "$nasm_avail" ; then
-	RC4_ASM="rc4/rc4-x64.o"
-	RC4_ASM_FLAGS="-DRC4_ASM"
-	AC_SUBST([RC4_ASM])
-	AC_SUBST([RC4_ASM_FLAGS])
+	if test "$enable_rc4_asm" != "no" ; then
+		RC4_ASM="rc4/rc4-x64.o"
+		RC4_ASM_FLAGS="-DRC4_ASM"
+		AC_SUBST([RC4_ASM])
+		AC_SUBST([RC4_ASM_FLAGS])
+		AC_MSG_NOTICE([using rc4 assembly])
+	else
+		AC_MSG_NOTICE([using rc4 assembly])
+	fi
 
-	MD4_ASM="md4/md4-x64.o"
-	MD4_ASM_FLAGS="-DMD4_ASM"
-	AC_SUBST([MD4_ASM])
-	AC_SUBST([MD4_ASM_FLAGS])
+	if test "$enable_md4_asm" != "no" ; then
+		MD4_ASM="md4/md4-x64.o"
+		MD4_ASM_FLAGS="-DMD4_ASM"
+		AC_SUBST([MD4_ASM])
+		AC_SUBST([MD4_ASM_FLAGS])
+		AC_MSG_NOTICE([using md4 assembly])
+	else
+		AC_MSG_NOTICE([using md4 assembly])
+	fi
 
-	MD5_ASM="md5/md5-x64.o"
-	MD5_ASM_FLAGS="-DMD5_ASM"
-	AC_SUBST([MD5_ASM])
-	AC_SUBST([MD5_ASM_FLAGS])
+	if test "$enable_md5_asm" != "no" ; then
+		MD5_ASM="md5/md5-x64.o"
+		MD5_ASM_FLAGS="-DMD5_ASM"
+		AC_SUBST([MD5_ASM])
+		AC_SUBST([MD5_ASM_FLAGS])
+		AC_MSG_NOTICE([using md5 assembly])
+	else
+		AC_MSG_NOTICE([using md5 assembly])
+	fi
 fi
 
 AC_OUTPUT(
