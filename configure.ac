@@ -44,8 +44,6 @@ if test -z "$nasm_avail" ; then
 		AC_SUBST([RC4_ASM])
 		AC_SUBST([RC4_ASM_FLAGS])
 		AC_MSG_NOTICE([using rc4 assembly])
-	else
-		AC_MSG_NOTICE([using rc4 assembly])
 	fi
 
 	if test "$enable_md4_asm" != "no" ; then
@@ -54,8 +52,6 @@ if test -z "$nasm_avail" ; then
 		AC_SUBST([MD4_ASM])
 		AC_SUBST([MD4_ASM_FLAGS])
 		AC_MSG_NOTICE([using md4 assembly])
-	else
-		AC_MSG_NOTICE([using md4 assembly])
 	fi
 
 	if test "$enable_md5_asm" != "no" ; then
@@ -63,8 +59,6 @@ if test -z "$nasm_avail" ; then
 		MD5_ASM_FLAGS="-DMD5_ASM"
 		AC_SUBST([MD5_ASM])
 		AC_SUBST([MD5_ASM_FLAGS])
-		AC_MSG_NOTICE([using md5 assembly])
-	else
 		AC_MSG_NOTICE([using md5 assembly])
 	fi
 fi
