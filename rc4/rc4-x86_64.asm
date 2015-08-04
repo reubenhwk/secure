@@ -7,8 +7,10 @@ ENDSTRUC
 
 
 section	.text
+	global _rc4_crypt
 	global rc4_crypt
 
+_rc4_crypt:
 rc4_crypt:
 	;  RDI, RSI, RDX, RCX, R8, and R9
 

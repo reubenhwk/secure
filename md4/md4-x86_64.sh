@@ -81,8 +81,10 @@ S34=15
 #;  RDI, RSI, RDX, RCX, R8, and R9
 echo
 echo "section	.text"
+echo "	global _md4_round"
 echo "	global md4_round"
 echo
+echo "_md4_round:"
 echo "md4_round:"
 echo
 echo "	push	rbx"
