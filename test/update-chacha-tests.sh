@@ -10,9 +10,9 @@ for i in 8 12 20 ; do
 cat << EOF > test/chacha$i.sh
 #!/bin/bash
 
-v1=$(cat test/chacha$i-test.bin | ./cpt chacha$i | ./cpt md5)
+v1=\$(cat test/chacha$i-test.bin | ./cpt chacha$i | ./cpt md5)
 
-if [ "$v1" != "$HASH" ] ; then
+if [ "\$v1" != "$HASH" ] ; then
 	echo "vector1 failed" >&2
 	exit -1
 fi
@@ -20,5 +20,6 @@ fi
 echo success
 
 EOF
+chmod +x test/chacha$i.sh
 done
 
