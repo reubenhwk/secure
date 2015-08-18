@@ -10,18 +10,26 @@
 #define XOR(v, w) ((v) ^ (w))
 #define PLUS(x, y) ((x) + (y))
 
+#ifdef BIGE
 #define U32TO8_LITTLE(p, v) do { \
 	(p)[0] = ((v)      ) & 0xff; \
 	(p)[1] = ((v) >>  8) & 0xff; \
 	(p)[2] = ((v) >> 16) & 0xff; \
 	(p)[3] = ((v) >> 24) & 0xff; \
 } while (0)
+#else
+#define U32TO8_LITTLE(p, v) ((((uint32_t*)(p))[0]) = (((uint32_t)(v))))
+#endif
 
+#ifdef BIGE
 #define U8TO32_LITTLE(p) \
 	(((uint32_t)((p)[0])      ) | \
 	 ((uint32_t)((p)[1]) <<  8) | \
 	 ((uint32_t)((p)[2]) << 16) | \
 	 ((uint32_t)((p)[3]) << 24) )
+#else
+#define U8TO32_LITTLE(p) (((uint32_t*)(p))[0])
+#endif
 
 #define QUARTERROUND(a,b,c,d) do { \
 	x[a] = PLUS(x[a],x[b]); x[d] = ROTATE(XOR(x[d],x[a]),16); \
