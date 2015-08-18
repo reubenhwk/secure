@@ -61,6 +61,10 @@ void ChaChaXOR(
 	unsigned int u;
 	unsigned int i;
 
+	input[0] = U8TO32_LITTLE(sigma + 0);
+	input[1] = U8TO32_LITTLE(sigma + 4);
+	input[2] = U8TO32_LITTLE(sigma + 8);
+	input[3] = U8TO32_LITTLE(sigma + 12);
 	input[4] = U8TO32_LITTLE(key + 0);
 	input[5] = U8TO32_LITTLE(key + 4);
 	input[6] = U8TO32_LITTLE(key + 8);
@@ -69,10 +73,6 @@ void ChaChaXOR(
 	input[9] = U8TO32_LITTLE(key + 20);
 	input[10] = U8TO32_LITTLE(key + 24);
 	input[11] = U8TO32_LITTLE(key + 28);
-	input[0] = U8TO32_LITTLE(sigma + 0);
-	input[1] = U8TO32_LITTLE(sigma + 4);
-	input[2] = U8TO32_LITTLE(sigma + 8);
-	input[3] = U8TO32_LITTLE(sigma + 12);
 	input[12] = counter;
 	input[13] = counter >> 32;
 	input[14] = U8TO32_LITTLE(nonce + 0);
