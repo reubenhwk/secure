@@ -62,11 +62,11 @@ static void ChaChaCore(unsigned char output[64], const uint32_t matrix[16], int 
 
 typedef struct {
 	uint64_t counter;
+	uint64_t nonce;
 	int used;
 	int rounds;
 	unsigned char block[64];
 	unsigned char key[32];
-	unsigned char nonce[8];
 } chacha_ctx_t;
 
 void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
@@ -81,7 +81,7 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 
 	memcpy(matrix, sigma, 16);
 	memcpy(matrix+4, ctx->key, sizeof(ctx->key));
-	memcpy(matrix+14, ctx->nonce, sizeof(ctx->nonce));
+	memcpy(matrix+14, &ctx->nonce, sizeof(ctx->nonce));
 
 	/* Use up the remaining values in block. */
 	while (len > 0 && ctx->used & 0x3f) {
@@ -125,8 +125,7 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 chacha_ctx_t * chacha_new_ctx(
 	unsigned char const * key,
 	size_t keylen,
-	unsigned char const * nonce,
-	size_t noncelen,
+	uint64_t nonce,
 	int counter,
 	int rounds,
 	int flags)
@@ -134,6 +133,7 @@ chacha_ctx_t * chacha_new_ctx(
 	chacha_ctx_t * retval = malloc(sizeof(chacha_ctx_t));
 	memset(retval, 0, sizeof(chacha_ctx_t));
 	retval->counter = counter;
+	retval->nonce = nonce;
 	retval->rounds = rounds;
 
 	return retval;
@@ -141,7 +141,7 @@ chacha_ctx_t * chacha_new_ctx(
 
 int main(void)
 {
-	chacha_ctx_t * chacha = chacha_new_ctx(NULL, 0, NULL, 0, 0, ROUNDS, 0);
+	chacha_ctx_t * chacha = chacha_new_ctx(NULL, 0, 0, 0, ROUNDS, 0);
 
 	char buffer[16*1024];
 	int rc;
