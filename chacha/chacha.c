@@ -59,7 +59,7 @@ static void ChaChaCore(chacha_ctx_t * ctx, int num_rounds)
 	/* The matrix may be in big or little endian, but the block must be
 	 * little endian.  Swap all the bytes in the block on Big E systems. */
 	if (ctx->bige) {
-		for (int i = 4; i < 12; ++i) {
+		for (int i = 0; i < 16; ++i) {
 			ctx->block.u32[i] = __builtin_bswap32(ctx->block.u32[i]);
 		}
 	}
