@@ -120,10 +120,6 @@ chacha_ctx_t * chacha_new_ctx(
 	int rounds,
 	int flags)
 {
-	if (NULL == key) {
-		key = "";
-	}
-
 	chacha_ctx_t * ctx = malloc(sizeof(chacha_ctx_t));
 	memset(ctx, 0, sizeof(chacha_ctx_t));
 
@@ -161,13 +157,10 @@ chacha_ctx_t * chacha_new_ctx(
 int main(int argc, char * argv[])
 {
 	chacha_ctx_t * chacha = NULL;
-	uint32_t nonce[3] = {0x1, 0x2, 0x3};
+	uint32_t nonce[3] = {};
 
 	chacha = chacha_new_ctx(
-		(unsigned const char*)
-		"asdfasdfasdfasdf"
-		"1234567887654321",
-		32,
+		NULL, 0,
 		0x12345678,
 		(unsigned const char*)nonce, sizeof(nonce),
 		ROUNDS, 0);
