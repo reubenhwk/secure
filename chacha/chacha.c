@@ -43,9 +43,6 @@ static void ChaChaCore(unsigned char output[64], const uint32_t input[16], int n
 
 	for (i = 0; i < 16; ++i) {
 		x[i] = PLUS(x[i], input[i]);
-	}
-
-	for (i = 0; i < 16; ++i) {
 		U32TO8_LITTLE(output + 4 * i, x[i]);
 	}
 }
