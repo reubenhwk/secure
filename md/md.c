@@ -10,22 +10,10 @@ md_t * MD_Init(md_t * md)
 		md = malloc(sizeof(md_t));
 	}
 
-	md->s._8[0x0] = 0x01;
-	md->s._8[0x1] = 0x23;
-	md->s._8[0x2] = 0x45;
-	md->s._8[0x3] = 0x67;
-	md->s._8[0x4] = 0x89;
-	md->s._8[0x5] = 0xab;
-	md->s._8[0x6] = 0xcd;
-	md->s._8[0x7] = 0xef;
-	md->s._8[0x8] = 0xfe;
-	md->s._8[0x9] = 0xdc;
-	md->s._8[0xa] = 0xba;
-	md->s._8[0xb] = 0x98;
-	md->s._8[0xc] = 0x76;
-	md->s._8[0xd] = 0x54;
-	md->s._8[0xe] = 0x32;
-	md->s._8[0xf] = 0x10;
+	md->s._32[0] = 0x67452301;
+	md->s._32[1] = 0xefcdab89;
+	md->s._32[2] = 0x98badcfe;
+	md->s._32[3] = 0x10325476;
 
 	md->count = 0;
 
@@ -77,10 +65,19 @@ void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC md_r
 		0, 0, 0, 0, 0, 0, 0, 0,
 	};
 
+#ifdef BIGENDIAN
+	uint64_t bits = __builtin_bswap64(8 * md->count);
+#else
 	uint64_t bits = 8 * md->count;
+#endif
 	MD_Update(md, pad, compute_pad_len(md->count), md_round);
 	MD_Update(md, (unsigned char*)&bits, sizeof(bits), md_round);
 
+#ifdef BIGENDIAN
+	for (int i = 0; i < 4; ++i) {
+		md->s._32[i] = __builtin_bswap32(md->s._32[i]);
+	}
+#endif
 	if (digest) {
 		memcpy(digest, (unsigned char *)md->s._8, len);
 	}
