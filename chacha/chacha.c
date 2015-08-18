@@ -91,7 +91,7 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	}
 
 	/* Generate blocks and xor with buffer in 64-byte chunks */
-	for (len; len >= 64; len-=64) {
+	for (len; len >= 64; len -= 64) {
 		memcpy(matrix+12, &ctx->counter, sizeof(ctx->counter));
 		++ctx->counter;
 		ChaChaCore(ctx->block, matrix, ctx->rounds);
