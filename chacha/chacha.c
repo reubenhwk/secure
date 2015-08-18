@@ -37,11 +37,10 @@
 static void ChaChaCore(unsigned char output[64], const uint32_t input[16], int num_rounds)
 {
 	uint32_t x[16];
-	int i;
 
 	memcpy(x, input, sizeof(uint32_t) * 16);
 
-	for (i = num_rounds; i > 0; i -= 2) {
+	for (int i = num_rounds; i > 0; i -= 2) {
 		QUARTERROUND( 0, 4, 8,12);
 		QUARTERROUND( 1, 5, 9,13);
 		QUARTERROUND( 2, 6,10,14);
@@ -52,67 +51,8 @@ static void ChaChaCore(unsigned char output[64], const uint32_t input[16], int n
 		QUARTERROUND( 3, 4, 9,14);
 	}
 
-	for (i = 0; i < 16; ++i) {
-		x[i] += input[i];
-		U32TO8_LITTLE(output + 4 * i, x[i]);
-	}
-}
-
-void ChaChaXOR(
-	unsigned char *in,
-	unsigned int inLen,
-	const unsigned char key[32],
-	const unsigned char nonce[8],
-	uint64_t counter,
-	int num_rounds)
-{
-	static const unsigned char sigma[16] = "expand 32-byte k";
-	uint32_t input[16];
-	unsigned int i;
-
-	input[0] = U8TO32_LITTLE(sigma + 0);
-	input[1] = U8TO32_LITTLE(sigma + 4);
-	input[2] = U8TO32_LITTLE(sigma + 8);
-	input[3] = U8TO32_LITTLE(sigma + 12);
-	input[4] = U8TO32_LITTLE(key + 0);
-	input[5] = U8TO32_LITTLE(key + 4);
-	input[6] = U8TO32_LITTLE(key + 8);
-	input[7] = U8TO32_LITTLE(key + 12);
-	input[8] = U8TO32_LITTLE(key + 16);
-	input[9] = U8TO32_LITTLE(key + 20);
-	input[10] = U8TO32_LITTLE(key + 24);
-	input[11] = U8TO32_LITTLE(key + 28);
-	input[12] = counter;
-	input[13] = counter >> 32;
-	input[14] = U8TO32_LITTLE(nonce + 0);
-	input[15] = U8TO32_LITTLE(nonce + 4);
-
-	while (inLen >= 64) {
-		unsigned char block[64];
-		ChaChaCore(block, input, num_rounds);
-		for (i = 0; i < 64; i+=8) {
-			in[i + 0] ^= block[i + 0];
-			in[i + 1] ^= block[i + 1];
-			in[i + 2] ^= block[i + 2];
-			in[i + 3] ^= block[i + 3];
-			in[i + 4] ^= block[i + 4];
-			in[i + 5] ^= block[i + 5];
-			in[i + 6] ^= block[i + 6];
-			in[i + 7] ^= block[i + 7];
-		}
-		input[12]++;
-		if (input[12] == 0) {
-			input[13]++;
-		}
-		inLen -= 64;
-		in += 64;
-	}
-	if (inLen > 0) {
-		unsigned char block[64];
-		ChaChaCore(block, input, num_rounds);
-		for (i = 0; i < inLen; i++) {
-			in[i] ^= block[i];
-		}
+	for (int i = 0; i < 16; ++i) {
+		U32TO8_LITTLE(output + 4 * i, x[i] + input[i]);
 	}
 }
 
@@ -123,19 +63,54 @@ typedef struct {
 	unsigned char nonce[8];
 } chacha_ctx_t;
 
+void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
+{
+	unsigned char * buffer = (unsigned char*)_buffer;
+	unsigned char const sigma[] = {"expand 32-byte k"};
+	uint32_t input[16];
+
+	memcpy(input, sigma, 16);
+	input[4] = U8TO32_LITTLE(ctx->key + 0);
+	input[5] = U8TO32_LITTLE(ctx->key + 4);
+	input[6] = U8TO32_LITTLE(ctx->key + 8);
+	input[7] = U8TO32_LITTLE(ctx->key + 12);
+	input[8] = U8TO32_LITTLE(ctx->key + 16);
+	input[9] = U8TO32_LITTLE(ctx->key + 20);
+	input[10] = U8TO32_LITTLE(ctx->key + 24);
+	input[11] = U8TO32_LITTLE(ctx->key + 28);
+	memcpy(&input[12], &ctx->counter, sizeof(ctx->counter));
+	input[14] = U8TO32_LITTLE(ctx->nonce + 0);
+	input[15] = U8TO32_LITTLE(ctx->nonce + 4);
+
+	while (len >= 64) {
+		unsigned char block[64];
+		ChaChaCore(block, input, ctx->rounds);
+		for (int i = 0; i < 64; i += 8) {
+			buffer[i + 0] ^= block[i + 0];
+			buffer[i + 1] ^= block[i + 1];
+			buffer[i + 2] ^= block[i + 2];
+			buffer[i + 3] ^= block[i + 3];
+			buffer[i + 4] ^= block[i + 4];
+			buffer[i + 5] ^= block[i + 5];
+			buffer[i + 6] ^= block[i + 6];
+			buffer[i + 7] ^= block[i + 7];
+		}
+		ctx->counter++;
+		memcpy(&input[12], &ctx->counter, sizeof(ctx->counter));
+		len -= 64;
+		buffer += 64;
+	}
+	if (len > 0) {
+		unsigned char block[64];
+		ChaChaCore(block, input, ctx->rounds);
+		for (int i = 0; i < len; ++i) {
+			buffer[i] ^= block[i];
+		}
+	}
+}
+
 #define chacha_encrypt chacha_crypt
 #define chacha_decrypt chacha_crypt
-
-void chacha_crypt(chacha_ctx_t * chacha, void * buffer, size_t len)
-{
-	ChaChaXOR(
-		buffer,
-		len,
-		chacha->key,
-		chacha->nonce,
-		chacha->counter++,
-		chacha->rounds);
-}
 
 chacha_ctx_t * chacha_new_ctx(
 	unsigned char const * key,
