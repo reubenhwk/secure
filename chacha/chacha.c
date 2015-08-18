@@ -62,7 +62,7 @@ static void ChaChaCore(unsigned char output[64], const uint32_t matrix[16], int 
 
 typedef struct {
 	uint64_t counter;
-	uint64_t bytes;
+	int used;
 	int rounds;
 	unsigned char block[64];
 	unsigned char key[32];
@@ -80,31 +80,17 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	memcpy(matrix+12, &ctx->counter, sizeof(ctx->counter));
 	memcpy(matrix+14, ctx->nonce, sizeof(ctx->nonce));
 
-	while (len >= 64) {
-		ChaChaCore(ctx->block, matrix, ctx->rounds);
-		for (int i = 0; i < 64; i += 8) {
-			buffer[i + 0] ^= ctx->block[i + 0];
-			buffer[i + 1] ^= ctx->block[i + 1];
-			buffer[i + 2] ^= ctx->block[i + 2];
-			buffer[i + 3] ^= ctx->block[i + 3];
-			buffer[i + 4] ^= ctx->block[i + 4];
-			buffer[i + 5] ^= ctx->block[i + 5];
-			buffer[i + 6] ^= ctx->block[i + 6];
-			buffer[i + 7] ^= ctx->block[i + 7];
+	while (len > 0) {
+		int c = ctx->used & 0x3f;
+		if (0 == c) {
+			ChaChaCore(ctx->block, matrix, ctx->rounds);
+			ctx->used = 0;
 		}
-		ctx->counter++;
+		*(buffer++) ^= ctx->block[c];
+		++ctx->counter;
 		memcpy(&matrix[12], &ctx->counter, sizeof(ctx->counter));
-		buffer += 64;
-		len -= 64;
-		ctx->bytes += 64;
-	}
-
-	if (len > 0) {
-		ChaChaCore(ctx->block, matrix, ctx->rounds);
-		for (int i = 0; i < len; ++i) {
-			buffer[i] ^= ctx->block[i];
-		}
-		ctx->bytes += len;
+		--len;
+		++ctx->used;
 	}
 }
 
