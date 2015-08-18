@@ -157,12 +157,16 @@ chacha_ctx_t * chacha_new_ctx(
 int main(int argc, char * argv[])
 {
 	chacha_ctx_t * chacha = NULL;
-	uint32_t nonce[3] = {0x1};
+	unsigned char nonce[12] = {
+		0x01, 0x02, 0x03, 0x04,
+		0x05, 0x06, 0x07, 0x08,
+		0x09, 0x0a, 0x0b, 0x0c,
+	};
 
 	chacha = chacha_new_ctx(
 		NULL, 0,
 		0x12345678,
-		(unsigned const char*)nonce, sizeof(nonce),
+		nonce, sizeof(nonce),
 		ROUNDS, 0);
 
 	char buffer[16*1024];
