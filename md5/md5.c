@@ -132,7 +132,6 @@ void MD5_Final(md5_t * md, unsigned char * digest, size_t len)
 	MD_Final(md, digest, len, md5_round);
 }
 
-#ifdef TEST
 int main()
 {
 	md5_t ctx;
@@ -154,5 +153,4 @@ int main()
 
 	return 0;
 }
-#endif
 

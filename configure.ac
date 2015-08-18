@@ -12,8 +12,6 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES(yes)])
 AC_PROG_CC_C99
 AX_PROG_NASM([nasm_avail="no"])
 
-AC_DEFINE(TEST)
-
 AC_ARG_ENABLE([rc4-asm],
   AS_HELP_STRING([--enable-rc4-asm],
     [use rc4 assembly language implementation (if abailable)]),

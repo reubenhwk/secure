@@ -37,7 +37,6 @@ void rc4_crypt(rc4_ctx_t * rc4, void * _buffer, size_t len)
 }
 #endif
 
-#ifdef TEST
 int main(void)
 {
 	rc4_ctx_t * rc4 = rc4_new_ctx(NULL, 0, 0);
@@ -55,5 +54,4 @@ int main(void)
 	rc4_free_ctx(rc4);
 	return 0;
 }
-#endif
 
