@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* https://tools.ietf.org/html/rfc7539 */
+
 typedef union {
 	uint8_t u8[64];
 	uint32_t u32[16];
@@ -16,6 +18,7 @@ typedef struct {
 	matrix_t block;
 	int used;
 	int rounds;
+	int bige;
 } chacha_ctx_t;
 
 #define ROTL32(v, n) (((v) << (n)) | ((v) >> (32 - (n))))
@@ -52,7 +55,16 @@ static void ChaChaCore(chacha_ctx_t * ctx, int num_rounds)
 	for (int i = 0; i < 16; ++i) {
 		ctx->block.u32[i] += ctx->matrix.u32[i];
 	}
-	++ctx->matrix.u64[5];
+
+	/* The matrix may be in big or little endian, but the block must be
+	 * little endian.  Swap all the bytes in the block on Big E systems. */
+	if (ctx->bige) {
+		for (int i = 4; i < 12; ++i) {
+			ctx->block.u32[i] = __builtin_bswap32(ctx->block.u32[i]);
+		}
+	}
+
+	++ctx->matrix.u32[12];
 }
 
 void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
@@ -102,8 +114,8 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 chacha_ctx_t * chacha_new_ctx(
 	unsigned char const * key,
 	size_t keylen,
-	uint64_t nonce,
-	uint64_t counter,
+	uint32_t counter,
+	uint32_t nonce[3],
 	int rounds,
 	int flags)
 {
@@ -116,11 +128,30 @@ chacha_ctx_t * chacha_new_ctx(
 
 	ctx->rounds = rounds;
 
-	unsigned char const sigma[] = {"expand 32-byte k"};
-	memcpy(&ctx->matrix.u8[0], sigma, 16);
+	ctx->matrix.u32[0] = 0x61707865;
+	ctx->matrix.u32[1] = 0x3320646e;
+	ctx->matrix.u32[2] = 0x79622d32;
+	ctx->matrix.u32[3] = 0x6b206574;
+
+	/* The key is copied in little endian, so on Big E systems the key words
+	 * need to be swapped. */
 	memcpy(&ctx->matrix.u8[16], key, 32 < strlen(key) ? 32 : strlen(key));
-	ctx->matrix.u64[6] = counter;
-	ctx->matrix.u64[7] = nonce;
+	union {
+		unsigned char c[2];
+		unsigned short s;
+	} be_test;
+	be_test.s = 0xff;
+	if (be_test.c[1]) {
+		ctx->bige = 1;
+		for (int i = 4; i < 12; ++i) {
+			ctx->matrix.u32[i] = __builtin_bswap32(ctx->matrix.u32[i]);
+		}
+	}
+
+	ctx->matrix.u32[12] = counter;
+	ctx->matrix.u32[13] = nonce[0];
+	ctx->matrix.u32[14] = nonce[1];
+	ctx->matrix.u32[15] = nonce[2];
 
 	/* Generate the first block */
 	ChaChaCore(ctx, ctx->rounds);
@@ -131,18 +162,12 @@ chacha_ctx_t * chacha_new_ctx(
 int main(int argc, char * argv[])
 {
 	chacha_ctx_t * chacha = NULL;
+	uint32_t nonce[3] = {0x1, 0x2, 0x3};
 
-	if (argc == 2) {
-		chacha = chacha_new_ctx(argv[1], strlen(argv[1]), 0, 0, ROUNDS, 0);
-	} else if (argc == 3) {
-		chacha = chacha_new_ctx(argv[1], strlen(argv[1]),
-			atol(argv[2]), 0, ROUNDS, 0);
-	} else if (argc == 4) {
-		chacha = chacha_new_ctx(argv[1], strlen(argv[1]),
-			atol(argv[2]), atol(argv[3]), ROUNDS, 0);
-	} else {
-		chacha = chacha_new_ctx(NULL, 0, 0, 0, ROUNDS, 0);
-	}
+	chacha = chacha_new_ctx(
+		"asdfasdfasdfasdf"
+		"1234567887654321",
+		32, 1024, nonce, ROUNDS, 0);
 
 	char buffer[16*1024];
 	int rc;
