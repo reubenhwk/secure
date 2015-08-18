@@ -8,7 +8,11 @@ bin_PROGRAMS = \
 	cpt-md4 \
 	cpt-md5 \
 	cpt-rc4 \
+	cpt-chacha \
 	# end bin_PROGRAMS
+
+cpt_chacha_SOURCES = \
+	chacha/chacha.c
 
 cpt_rc4_CPPFLAGS = \
 	@RC4_ASM_FLAGS@

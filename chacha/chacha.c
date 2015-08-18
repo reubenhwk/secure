@@ -1,7 +1,9 @@
 
-#include <string.h>
-#include <stdio.h>
+#include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define ROTL32(v, n) (((v) << (n)) | ((v) >> (32 - (n))))
 #define ROTATE(v, c) ROTL32((v), (c))
@@ -98,5 +100,19 @@ void ChaCha20XOR(
 			out[i] = in[i] ^ block[i];
 		}
 	}
+}
+
+int main(void)
+{
+	char buffer[16*1024];
+	int rc;
+	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
+		int wc = fwrite(buffer, 1, rc, stdout);
+		if (rc != wc) {
+			fprintf(stderr, "failed to write, %s\n", strerror(errno));
+			exit(-1);
+		}
+	}
+	return 0;
 }
 
