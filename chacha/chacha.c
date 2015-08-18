@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define ROTL32(v, n) (((v) << (n)) | ((v) >> (32 - (n))))
-#define ROTATE(v, c) ROTL32((v), (c))
+#define ROTATE(v, c) ((v) = ROTL32((v), (c)))
 
 #ifdef BIGE
 #define U32TO8_LITTLE(p, v) do { \
@@ -27,10 +27,10 @@
 
 static inline void chacha_round(uint32_t x[16], int a, int b, int c, int d)
 {
-	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a], 16);
-	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c], 12);
-	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a],  8);
-	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c],  7);
+	x[a] += x[b]; x[d] ^= x[a]; ROTATE(x[d], 16);
+	x[c] += x[d]; x[b] ^= x[c]; ROTATE(x[b], 12);
+	x[a] += x[b]; x[d] ^= x[a]; ROTATE(x[d],  8);
+	x[c] += x[d]; x[b] ^= x[c]; ROTATE(x[b],  7);
 }
 
 static inline void chacha_rounds(uint32_t x[16])
