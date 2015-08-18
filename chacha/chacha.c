@@ -103,8 +103,8 @@ void ChaChaXOR(
 
 int main(void)
 {
-	const unsigned char key[32] = {"this is a test"};
-	const unsigned char nonce[8] = {"asdf"};
+	const unsigned char key[32] = {};
+	const unsigned char nonce[8] = {};
 	uint64_t counter = 0;
 
 	char buffer[16*1024];

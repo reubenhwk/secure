@@ -43,3 +43,5 @@ if [ "$v7" != "57edf4a22be3c955ac49da2e2107b67a" ] ; then
 	exit -1
 fi
 
+echo success
+

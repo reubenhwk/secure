@@ -3,11 +3,15 @@ AUTOMAKE_OPTIONS = 1.2 foreign subdir-objects
 
 check_SCRIPTS = \
 	test/md4.sh \
-	test/md5.sh
+	test/md5.sh \
+	test/rc4.sh \
+	test/chacha8.sh
 
 TESTS = \
 	test/md4.sh \
-	test/md5.sh
+	test/md5.sh \
+	test/rc4.sh \
+	test/chacha8.sh
 
 %.o: %.asm
 	$(AM_V_GEN)nasm @NASMFLAGS@ $<
