@@ -71,6 +71,10 @@ typedef struct {
 
 void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 {
+	if (0 == len) {
+		return;
+	}
+
 	unsigned char * buffer = (unsigned char*)_buffer;
 	unsigned char const sigma[] = {"expand 32-byte k"};
 	uint32_t matrix[16];
@@ -79,20 +83,22 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	memcpy(matrix+4, ctx->key, sizeof(ctx->key));
 	memcpy(matrix+14, ctx->nonce, sizeof(ctx->nonce));
 
-	/* Use up the remaining values in ctx->block */ {
-		while (len > 0 && ctx->used & 0x3f) {
-			*(buffer++) ^= ctx->block[ctx->used++];
-			--len;
-		}
-
-		ctx->used &= 0x3f;
+	/* Use up the remaining values in block. */
+	while (len > 0 && ctx->used & 0x3f) {
+		*(buffer++) ^= ctx->block[ctx->used++];
+		--len;
 	}
 
-	/* Generate blocks and xor with buffer in 64-byte chunks */
-	for (len; len >= 64; len -= 64) {
+	/* If the block values have all been used, generate a new block */
+	if (64 == ctx->used) {
+		ctx->used = 0;
 		memcpy(matrix+12, &ctx->counter, sizeof(ctx->counter));
 		++ctx->counter;
 		ChaChaCore(ctx->block, matrix, ctx->rounds);
+	}
+
+	/* Generate blocks and xor with buffer in 64-byte chunks */
+	for (len; len >= 64; buffer += 64, len -= 64) {
 		*(uint64_t*)(buffer+0) ^= *(uint64_t*)(ctx->block+0);
 		*(uint64_t*)(buffer+8) ^= *(uint64_t*)(ctx->block+8);
 		*(uint64_t*)(buffer+16) ^= *(uint64_t*)(ctx->block+16);
@@ -101,7 +107,9 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 		*(uint64_t*)(buffer+40) ^= *(uint64_t*)(ctx->block+40);
 		*(uint64_t*)(buffer+48) ^= *(uint64_t*)(ctx->block+48);
 		*(uint64_t*)(buffer+56) ^= *(uint64_t*)(ctx->block+56);
-		buffer += 64;
+		memcpy(matrix+12, &ctx->counter, sizeof(ctx->counter));
+		++ctx->counter;
+		ChaChaCore(ctx->block, matrix, ctx->rounds);
 	}
 
 	while (len--) {
