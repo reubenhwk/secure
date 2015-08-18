@@ -100,16 +100,15 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 		memcpy(matrix+12, &ctx->counter, sizeof(ctx->counter));
 		++ctx->counter;
 		ChaChaCore(ctx->block, matrix, ctx->rounds);
-		for (int i = 0; i < 64; i+=8) {
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-			*(buffer++) ^= ctx->block[i];
-		}
+		*(uint64_t*)(buffer+0) ^= *(uint64_t*)(ctx->block+0);
+		*(uint64_t*)(buffer+8) ^= *(uint64_t*)(ctx->block+8);
+		*(uint64_t*)(buffer+16) ^= *(uint64_t*)(ctx->block+16);
+		*(uint64_t*)(buffer+24) ^= *(uint64_t*)(ctx->block+24);
+		*(uint64_t*)(buffer+32) ^= *(uint64_t*)(ctx->block+32);
+		*(uint64_t*)(buffer+40) ^= *(uint64_t*)(ctx->block+40);
+		*(uint64_t*)(buffer+48) ^= *(uint64_t*)(ctx->block+48);
+		*(uint64_t*)(buffer+56) ^= *(uint64_t*)(ctx->block+56);
+		buffer += 64;
 	}
 
 	while (len > 0) {
