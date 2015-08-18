@@ -98,7 +98,7 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	}
 
 	/* Bulk xor the buffer with block and generate a new block */
-	for (len; len >= 64; buffer += 64, len -= 64) {
+	for (; len >= 64; buffer += 64, len -= 64) {
 		*(uint64_t*)(buffer+0) ^= *(uint64_t*)(ctx->block+0);
 		*(uint64_t*)(buffer+8) ^= *(uint64_t*)(ctx->block+8);
 		*(uint64_t*)(buffer+16) ^= *(uint64_t*)(ctx->block+16);
