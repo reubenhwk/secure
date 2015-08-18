@@ -80,8 +80,15 @@ void ChaChaXOR(
 
 	while (inLen >= 64) {
 		ChaChaCore(block, input, num_rounds);
-		for (i = 0; i < 64; i++) {
-			in[i] ^= block[i];
+		for (i = 0; i < 64; i+=8) {
+			in[i + 0] ^= block[i + 0];
+			in[i + 1] ^= block[i + 1];
+			in[i + 2] ^= block[i + 2];
+			in[i + 3] ^= block[i + 3];
+			in[i + 4] ^= block[i + 4];
+			in[i + 5] ^= block[i + 5];
+			in[i + 6] ^= block[i + 6];
+			in[i + 7] ^= block[i + 7];
 		}
 		input[12]++;
 		if (input[12] == 0) {
