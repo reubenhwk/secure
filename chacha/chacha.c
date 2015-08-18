@@ -62,6 +62,7 @@ static void ChaChaCore(unsigned char output[64], const uint32_t matrix[16], int 
 
 typedef struct {
 	uint64_t counter;
+	uint64_t bytes;
 	int rounds;
 	unsigned char block[64];
 	unsigned char key[32];
@@ -95,12 +96,15 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 		memcpy(&matrix[12], &ctx->counter, sizeof(ctx->counter));
 		buffer += 64;
 		len -= 64;
+		ctx->bytes += 64;
 	}
+
 	if (len > 0) {
 		ChaChaCore(ctx->block, matrix, ctx->rounds);
 		for (int i = 0; i < len; ++i) {
 			buffer[i] ^= ctx->block[i];
 		}
+		ctx->bytes += len;
 	}
 }
 
