@@ -17,17 +17,13 @@
 	(p)[2] = ((v) >> 16) & 0xff; \
 	(p)[3] = ((v) >> 24) & 0xff; \
 } while (0)
-#else
-#define U32TO8_LITTLE(p, v) ((((uint32_t*)(p))[0]) = (((uint32_t)(v))))
-#endif
-
-#ifdef BIGE
 #define U8TO32_LITTLE(p) \
 	(((uint32_t)((p)[0])      ) | \
 	 ((uint32_t)((p)[1]) <<  8) | \
 	 ((uint32_t)((p)[2]) << 16) | \
 	 ((uint32_t)((p)[3]) << 24) )
 #else
+#define U32TO8_LITTLE(p, v) ((((uint32_t*)(p))[0]) = (((uint32_t)(v))))
 #define U8TO32_LITTLE(p) (((uint32_t*)(p))[0])
 #endif
 
@@ -71,9 +67,7 @@ void ChaChaXOR(
 	int num_rounds)
 {
 	static const unsigned char sigma[16] = "expand 32-byte k";
-	unsigned char block[64];
 	uint32_t input[16];
-	unsigned int u;
 	unsigned int i;
 
 	input[0] = U8TO32_LITTLE(sigma + 0);
@@ -94,6 +88,7 @@ void ChaChaXOR(
 	input[15] = U8TO32_LITTLE(nonce + 4);
 
 	while (inLen >= 64) {
+		unsigned char block[64];
 		ChaChaCore(block, input, num_rounds);
 		for (i = 0; i < 64; i+=8) {
 			in[i + 0] ^= block[i + 0];
@@ -113,6 +108,7 @@ void ChaChaXOR(
 		in += 64;
 	}
 	if (inLen > 0) {
+		unsigned char block[64];
 		ChaChaCore(block, input, num_rounds);
 		for (i = 0; i < inLen; i++) {
 			in[i] ^= block[i];
@@ -120,22 +116,52 @@ void ChaChaXOR(
 	}
 }
 
+typedef struct {
+	uint64_t counter;
+	int rounds;
+	unsigned char key[32];
+	unsigned char nonce[8];
+} chacha_ctx_t;
+
+#define chacha_encrypt chacha_crypt
+#define chacha_decrypt chacha_crypt
+
+void chacha_crypt(chacha_ctx_t * chacha, void * buffer, size_t len)
+{
+	ChaChaXOR(
+		buffer,
+		len,
+		chacha->key,
+		chacha->nonce,
+		chacha->counter++,
+		chacha->rounds);
+}
+
+chacha_ctx_t * chacha_new_ctx(
+	unsigned char const * key,
+	size_t keylen,
+	unsigned char const * nonce,
+	size_t noncelen,
+	int counter,
+	int rounds,
+	int flags)
+{
+	chacha_ctx_t * retval = malloc(sizeof(chacha_ctx_t));
+	memset(retval, 0, sizeof(chacha_ctx_t));
+	retval->counter = counter;
+	retval->rounds = rounds;
+
+	return retval;
+}
+
 int main(void)
 {
-	const unsigned char key[32] = {};
-	const unsigned char nonce[8] = {};
-	uint64_t counter = 0;
+	chacha_ctx_t * chacha = chacha_new_ctx(NULL, 0, NULL, 0, 0, ROUNDS, 0);
 
 	char buffer[16*1024];
 	int rc;
 	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
-		ChaChaXOR(
-			buffer,
-			rc,
-			key,
-			nonce,
-			counter++,
-			ROUNDS);
+		chacha_crypt(chacha, buffer, rc);
 		int wc = fwrite(buffer, 1, rc, stdout);
 		if (rc != wc) {
 			fprintf(stderr, "failed to write, %s\n", strerror(errno));
