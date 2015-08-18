@@ -44,7 +44,7 @@ void md5_round(md5_t * md, uint32_t const * b)
 
 	uint32_t x[16];
 
-#ifdef BIGENDIAN
+#ifdef _BIG_ENDIAN
 	for (int i = 0; i < 16; ++i) {
 		x[i] = __builtin_bswap32(b[i]);
 	}

@@ -58,11 +58,11 @@ static void ChaChaCore(chacha_ctx_t * ctx, int num_rounds)
 
 	/* The matrix may be in big or little endian, but the block must be
 	 * little endian.  Swap all the bytes in the block on Big E systems. */
-	if (ctx->bige) {
+#ifdef _BIG_ENDIAN
 		for (int i = 0; i < 16; ++i) {
 			ctx->block.u32[i] = __builtin_bswap32(ctx->block.u32[i]);
 		}
-	}
+#endif
 
 	++ctx->matrix.u32[12];
 }
@@ -135,18 +135,11 @@ chacha_ctx_t * chacha_new_ctx(
 
 	/* The key is copied in little endian, so on Big E systems the key words
 	 * need to be swapped. */
-	memcpy(&ctx->matrix.u8[16], key, 32 < strlen(key) ? 32 : strlen(key));
-	union {
-		unsigned char c[2];
-		unsigned short s;
-	} be_test;
-	be_test.s = 0xff;
-	if (be_test.c[1]) {
-		ctx->bige = 1;
-		for (int i = 4; i < 12; ++i) {
-			ctx->matrix.u32[i] = __builtin_bswap32(ctx->matrix.u32[i]);
-		}
+#ifdef _BIG_ENDIAN
+	for (int i = 4; i < 12; ++i) {
+		ctx->matrix.u32[i] = __builtin_bswap32(ctx->matrix.u32[i]);
 	}
+#endif
 
 	ctx->matrix.u32[12] = counter;
 	ctx->matrix.u32[13] = nonce[0];

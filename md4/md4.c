@@ -23,7 +23,7 @@ void md4_round(md4_t * md, uint32_t const * b)
 #define r2(A, B, C, D, i, s) (A = rol(A + gg(B, C, D) + i + 0x5A827999, s))
 #define r3(A, B, C, D, i, s) (A = rol(A + hh(B, C, D) + i + 0x6ED9EBA1, s))
 
-#ifdef BIG_ENDIAN
+#ifdef _BIG_ENDIAN
 	uint32_t x[16];
 
 	for (int i = 0; i < 16; ++i) {

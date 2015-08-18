@@ -65,7 +65,7 @@ void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC md_r
 		0, 0, 0, 0, 0, 0, 0, 0,
 	};
 
-#ifdef BIGENDIAN
+#ifdef _BIG_ENDIAN
 	uint64_t bits = __builtin_bswap64(8 * md->count);
 #else
 	uint64_t bits = 8 * md->count;
@@ -73,7 +73,7 @@ void MD_Final(md_t * md, unsigned char * digest, size_t len, MD_ROUNDS_PROC md_r
 	MD_Update(md, pad, compute_pad_len(md->count), md_round);
 	MD_Update(md, (unsigned char*)&bits, sizeof(bits), md_round);
 
-#ifdef BIGENDIAN
+#ifdef _BIG_ENDIAN
 	for (int i = 0; i < 4; ++i) {
 		md->s._32[i] = __builtin_bswap32(md->s._32[i]);
 	}
