@@ -1,6 +1,7 @@
 
+#include "chacha/chacha.h"
+
 #include <errno.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,11 +15,11 @@ typedef union {
 } matrix_t;
 
 typedef struct {
+	crypt_t h;
 	matrix_t matrix;
 	matrix_t block;
 	int used;
 	int rounds;
-	int bige;
 } chacha_ctx_t;
 
 #define ROTL32(v, n) (((v) << (n)) | ((v) >> (32 - (n))))
@@ -67,7 +68,7 @@ static void ChaChaCore(chacha_ctx_t * ctx, int num_rounds)
 	++ctx->matrix.u32[12];
 }
 
-void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
+static void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 {
 	if (0 == len) {
 		return;
@@ -108,10 +109,7 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	}
 }
 
-#define chacha_encrypt chacha_crypt
-#define chacha_decrypt chacha_crypt
-
-chacha_ctx_t * chacha_new_ctx(
+crypt_t * chacha_new_ctx(
 	unsigned char const * key,
 	size_t keylen,
 	unsigned char const * nonce,
@@ -151,12 +149,15 @@ chacha_ctx_t * chacha_new_ctx(
 	/* Generate the first block */
 	ChaChaCore(ctx, ctx->rounds);
 
-	return ctx;
+	ctx->h.encrypt = (encrypt_t)chacha_crypt;
+	ctx->h.decrypt = (decrypt_t)chacha_crypt;
+	ctx->h.free = free;
+
+	return (crypt_t*)ctx;
 }
 
 int main(int argc, char * argv[])
 {
-	chacha_ctx_t * chacha = NULL;
 	unsigned char key[32] = {
 		0xc9, 0x02, 0x03, 0x04,
 		0x05, 0xce, 0xcf, 0x6c,
@@ -173,7 +174,7 @@ int main(int argc, char * argv[])
 		0x09, 0x0a, 0x0b, 0x0c,
 	};
 
-	chacha = chacha_new_ctx(
+	crypt_t * chacha = chacha_new_ctx(
 		key, sizeof(key),
 		nonce, sizeof(nonce),
 		0x12345678,
@@ -182,13 +183,16 @@ int main(int argc, char * argv[])
 	char buffer[16*1024];
 	int rc;
 	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
-		chacha_crypt(chacha, buffer, rc);
+		chacha->encrypt(chacha, buffer, rc);
 		int wc = fwrite(buffer, 1, rc, stdout);
 		if (rc != wc) {
 			fprintf(stderr, "failed to write, %s\n", strerror(errno));
 			exit(-1);
 		}
 	}
+
+	chacha->free(chacha);
+
 	return 0;
 }
 
