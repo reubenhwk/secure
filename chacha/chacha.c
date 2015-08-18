@@ -140,6 +140,10 @@ chacha_ctx_t * chacha_new_ctx(
 {
 	chacha_ctx_t * retval = malloc(sizeof(chacha_ctx_t));
 	memset(retval, 0, sizeof(chacha_ctx_t));
+	if (key) {
+		memcpy(retval->key, key,
+			sizeof(retval->key) < keylen ? sizeof(retval->key) : keylen);
+	}
 	retval->counter = counter;
 	retval->nonce = nonce;
 	retval->rounds = rounds;
@@ -154,9 +158,21 @@ chacha_ctx_t * chacha_new_ctx(
 	return retval;
 }
 
-int main(void)
+int main(int argc, char * argv[])
 {
-	chacha_ctx_t * chacha = chacha_new_ctx(NULL, 0, 0, 0, ROUNDS, 0);
+	chacha_ctx_t * chacha = NULL;
+
+	if (argc == 2) {
+		chacha = chacha_new_ctx(argv[1], strlen(argv[1]), 0, 0, ROUNDS, 0);
+	} else if (argc == 3) {
+		chacha = chacha_new_ctx(argv[1], strlen(argv[1]),
+			atol(argv[2]), 0, ROUNDS, 0);
+	} else if (argc == 4) {
+		chacha = chacha_new_ctx(argv[1], strlen(argv[1]),
+			atol(argv[2]), atol(argv[3]), ROUNDS, 0);
+	} else {
+		chacha = chacha_new_ctx(NULL, 0, 0, 0, ROUNDS, 0);
+	}
 
 	char buffer[16*1024];
 	int rc;
