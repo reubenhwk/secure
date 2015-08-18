@@ -157,7 +157,7 @@ chacha_ctx_t * chacha_new_ctx(
 int main(int argc, char * argv[])
 {
 	chacha_ctx_t * chacha = NULL;
-	uint32_t nonce[3] = {};
+	uint32_t nonce[3] = {0x1};
 
 	chacha = chacha_new_ctx(
 		NULL, 0,
