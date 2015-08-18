@@ -59,9 +59,9 @@ static void ChaChaCore(chacha_ctx_t * ctx, int num_rounds)
 	/* The matrix may be in big or little endian, but the block must be
 	 * little endian.  Swap all the bytes in the block on Big E systems. */
 #ifdef _BIG_ENDIAN
-		for (int i = 0; i < 16; ++i) {
-			ctx->block.u32[i] = __builtin_bswap32(ctx->block.u32[i]);
-		}
+	for (int i = 0; i < 16; ++i) {
+		ctx->block.u32[i] = __builtin_bswap32(ctx->block.u32[i]);
+	}
 #endif
 
 	++ctx->matrix.u32[12];
@@ -115,7 +115,8 @@ chacha_ctx_t * chacha_new_ctx(
 	unsigned char const * key,
 	size_t keylen,
 	uint32_t counter,
-	uint32_t nonce[3],
+	unsigned char const * nonce,
+	size_t noncelen,
 	int rounds,
 	int flags)
 {
@@ -135,16 +136,21 @@ chacha_ctx_t * chacha_new_ctx(
 
 	/* The key is copied in little endian, so on Big E systems the key words
 	 * need to be swapped. */
+	memcpy(&ctx->matrix.u32[4], key, 32 < keylen ? 32 : keylen);
 #ifdef _BIG_ENDIAN
 	for (int i = 4; i < 12; ++i) {
 		ctx->matrix.u32[i] = __builtin_bswap32(ctx->matrix.u32[i]);
 	}
 #endif
 
+	/* RFC7539 specifies a 32-bit counter and 96-bit nonce. */
 	ctx->matrix.u32[12] = counter;
-	ctx->matrix.u32[13] = nonce[0];
-	ctx->matrix.u32[14] = nonce[1];
-	ctx->matrix.u32[15] = nonce[2];
+	memcpy(&ctx->matrix.u32[13], nonce, 12 < noncelen ? 12 : noncelen);
+#ifdef _BIG_ENDIAN
+	for (int i = 13; i < 16; ++i) {
+		ctx->matrix.u32[i] = __builtin_bswap32(ctx->matrix.u32[i]);
+	}
+#endif
 
 	/* Generate the first block */
 	ChaChaCore(ctx, ctx->rounds);
@@ -158,9 +164,13 @@ int main(int argc, char * argv[])
 	uint32_t nonce[3] = {0x1, 0x2, 0x3};
 
 	chacha = chacha_new_ctx(
+		(unsigned const char*)
 		"asdfasdfasdfasdf"
 		"1234567887654321",
-		32, 1024, nonce, ROUNDS, 0);
+		32,
+		0x12345678,
+		(unsigned const char*)nonce, sizeof(nonce),
+		ROUNDS, 0);
 
 	char buffer[16*1024];
 	int rc;
