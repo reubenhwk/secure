@@ -50,13 +50,13 @@ static void ChaChaCore(unsigned char output[64], const uint32_t input[16], int n
 	}
 }
 
-void ChaCha20XOR(
-	unsigned char *out,
-	const unsigned char *in,
+void ChaChaXOR(
+	unsigned char *in,
 	unsigned int inLen,
 	const unsigned char key[32],
 	const unsigned char nonce[8],
-	uint64_t counter)
+	uint64_t counter,
+	int num_rounds)
 {
 	static const unsigned char sigma[16] = "expand 32-byte k";
 	unsigned char block[64];
@@ -82,9 +82,9 @@ void ChaCha20XOR(
 	input[15] = U8TO32_LITTLE(nonce + 4);
 
 	while (inLen >= 64) {
-		ChaChaCore(block, input, 20);
+		ChaChaCore(block, input, num_rounds);
 		for (i = 0; i < 64; i++) {
-			out[i] = in[i] ^ block[i];
+			in[i] ^= block[i];
 		}
 		input[12]++;
 		if (input[12] == 0) {
@@ -92,21 +92,31 @@ void ChaCha20XOR(
 		}
 		inLen -= 64;
 		in += 64;
-		out += 64;
 	}
 	if (inLen > 0) {
-		ChaChaCore(block, input, 20);
+		ChaChaCore(block, input, num_rounds);
 		for (i = 0; i < inLen; i++) {
-			out[i] = in[i] ^ block[i];
+			in[i] ^= block[i];
 		}
 	}
 }
 
 int main(void)
 {
+	const unsigned char key[32] = {"this is a test"};
+	const unsigned char nonce[8] = {"asdf"};
+	uint64_t counter = 0;
+
 	char buffer[16*1024];
 	int rc;
 	while (rc = fread(buffer, 1, sizeof(buffer), stdin), rc > 0) {
+		ChaChaXOR(
+			buffer,
+			rc,
+			key,
+			nonce,
+			counter++,
+			ROUNDS);
 		int wc = fwrite(buffer, 1, rc, stdout);
 		if (rc != wc) {
 			fprintf(stderr, "failed to write, %s\n", strerror(errno));

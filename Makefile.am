@@ -8,10 +8,27 @@ bin_PROGRAMS = \
 	cpt-md4 \
 	cpt-md5 \
 	cpt-rc4 \
-	cpt-chacha \
+	cpt-chacha20 \
+	cpt-chacha12 \
+	cpt-chacha8 \
 	# end bin_PROGRAMS
 
-cpt_chacha_SOURCES = \
+cpt_chacha8_CPPFLAGS = \
+	-DROUNDS=8
+
+cpt_chacha8_SOURCES = \
+	chacha/chacha.c
+
+cpt_chacha12_CPPFLAGS = \
+	-DROUNDS=12
+
+cpt_chacha12_SOURCES = \
+	chacha/chacha.c
+
+cpt_chacha20_CPPFLAGS = \
+	-DROUNDS=20
+
+cpt_chacha20_SOURCES = \
 	chacha/chacha.c
 
 cpt_rc4_CPPFLAGS = \
