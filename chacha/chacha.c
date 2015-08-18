@@ -80,14 +80,12 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	memcpy(matrix+14, ctx->nonce, sizeof(ctx->nonce));
 
 	/* Use up the remaining values in ctx->block */ {
-		while (len > 0 && ctx->used < 64) {
+		while (len > 0 && ctx->used & 0x3f) {
 			*(buffer++) ^= ctx->block[ctx->used++];
 			--len;
 		}
 
-		if (ctx->used == 64) {
-			ctx->used = 0;
-		}
+		ctx->used &= 0x3f;
 	}
 
 	/* Generate blocks and xor with buffer in 64-byte chunks */
