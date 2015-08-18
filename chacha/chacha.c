@@ -69,6 +69,15 @@ typedef struct {
 	unsigned char key[32];
 } chacha_ctx_t;
 
+void init_chacha_matrix(chacha_ctx_t const * ctx, uint32_t matrix[16])
+{
+	unsigned char const sigma[] = {"expand 32-byte k"};
+
+	memcpy(matrix, sigma, 16);
+	memcpy(matrix+4, ctx->key, sizeof(ctx->key));
+	memcpy(matrix+14, &ctx->nonce, sizeof(ctx->nonce));
+}
+
 void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 {
 	if (0 == len) {
@@ -76,17 +85,16 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 	}
 
 	unsigned char * buffer = (unsigned char*)_buffer;
-	unsigned char const sigma[] = {"expand 32-byte k"};
-	uint32_t matrix[16];
-
-	memcpy(matrix, sigma, 16);
-	memcpy(matrix+4, ctx->key, sizeof(ctx->key));
-	memcpy(matrix+14, &ctx->nonce, sizeof(ctx->nonce));
 
 	/* Use up the remaining values in block. */
 	while (len > 0 && ctx->used & 0x3f) {
 		*(buffer++) ^= ctx->block[ctx->used++];
 		--len;
+	}
+
+	uint32_t matrix[16];
+	if (len > 64) {
+		init_chacha_matrix(ctx, matrix);
 	}
 
 	/* If the block values have all been used, generate a new block */
@@ -135,6 +143,13 @@ chacha_ctx_t * chacha_new_ctx(
 	retval->counter = counter;
 	retval->nonce = nonce;
 	retval->rounds = rounds;
+
+	/* Generate the first block */
+	uint32_t matrix[16];
+	init_chacha_matrix(retval, matrix);
+	memcpy(matrix+12, &retval->counter, sizeof(retval->counter));
+	++retval->counter;
+	ChaChaCore(retval->block, matrix, retval->rounds);
 
 	return retval;
 }
