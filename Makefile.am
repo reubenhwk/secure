@@ -5,13 +5,17 @@ check_SCRIPTS = \
 	test/md4.sh \
 	test/md5.sh \
 	test/rc4.sh \
-	test/chacha8.sh
+	test/chacha8.sh \
+	test/chacha12.sh \
+	test/chacha20.sh
 
 TESTS = \
 	test/md4.sh \
 	test/md5.sh \
 	test/rc4.sh \
-	test/chacha8.sh
+	test/chacha8.sh \
+	test/chacha12.sh \
+	test/chacha20.sh
 
 %.o: %.asm
 	$(AM_V_GEN)nasm @NASMFLAGS@ $<
