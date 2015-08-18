@@ -25,12 +25,25 @@
 #define U8TO32_LITTLE(p) (((uint32_t*)(p))[0])
 #endif
 
-#define QUARTERROUND(a,b,c,d) do { \
-	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a], 16); \
-	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c], 12); \
-	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a],  8); \
-	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c],  7); \
-} while (0)
+static inline void chacha_round(uint32_t x[16], int a, int b, int c, int d)
+{
+	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a], 16);
+	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c], 12);
+	x[a] += x[b]; x[d] = ROTATE(x[d] ^ x[a],  8);
+	x[c] += x[d]; x[b] = ROTATE(x[b] ^ x[c],  7);
+}
+
+static inline void chacha_rounds(uint32_t x[16])
+{
+	chacha_round(x, 0, 4, 8,12);
+	chacha_round(x, 1, 5, 9,13);
+	chacha_round(x, 2, 6,10,14);
+	chacha_round(x, 3, 7,11,15);
+	chacha_round(x, 0, 5,10,15);
+	chacha_round(x, 1, 6,11,12);
+	chacha_round(x, 2, 7, 8,13);
+	chacha_round(x, 3, 4, 9,14);
+}
 
 static void ChaChaCore(unsigned char output[64], const uint32_t matrix[16], int num_rounds)
 {
@@ -39,14 +52,7 @@ static void ChaChaCore(unsigned char output[64], const uint32_t matrix[16], int 
 	memcpy(x, matrix, sizeof(uint32_t) * 16);
 
 	for (int i = num_rounds; i > 0; i -= 2) {
-		QUARTERROUND( 0, 4, 8,12);
-		QUARTERROUND( 1, 5, 9,13);
-		QUARTERROUND( 2, 6,10,14);
-		QUARTERROUND( 3, 7,11,15);
-		QUARTERROUND( 0, 5,10,15);
-		QUARTERROUND( 1, 6,11,12);
-		QUARTERROUND( 2, 7, 8,13);
-		QUARTERROUND( 3, 4, 9,14);
+		chacha_rounds(x);
 	}
 
 	for (int i = 0; i < 16; ++i) {
