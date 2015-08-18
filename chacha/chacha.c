@@ -114,9 +114,9 @@ void chacha_crypt(chacha_ctx_t * ctx, void * _buffer, size_t len)
 chacha_ctx_t * chacha_new_ctx(
 	unsigned char const * key,
 	size_t keylen,
-	uint32_t counter,
 	unsigned char const * nonce,
 	size_t noncelen,
+	uint32_t counter,
 	int rounds,
 	int flags)
 {
@@ -157,6 +157,16 @@ chacha_ctx_t * chacha_new_ctx(
 int main(int argc, char * argv[])
 {
 	chacha_ctx_t * chacha = NULL;
+	unsigned char key[32] = {
+		0xc9, 0x02, 0x03, 0x04,
+		0x05, 0xce, 0xcf, 0x6c,
+		0x09, 0x6e, 0x0b, 0x0c,
+		0x01, 0x02, 0x03, 0x04,
+		0x09, 0x06, 0xcf, 0x08,
+		0x0d, 0x6e, 0x0b, 0x0c,
+		0x05, 0x6a, 0xcf, 0x6c,
+		0xd1, 0x0a, 0x0b, 0x0c,
+	};
 	unsigned char nonce[12] = {
 		0x01, 0x02, 0x03, 0x04,
 		0x05, 0x06, 0x07, 0x08,
@@ -164,9 +174,9 @@ int main(int argc, char * argv[])
 	};
 
 	chacha = chacha_new_ctx(
-		NULL, 0,
-		0x12345678,
+		key, sizeof(key),
 		nonce, sizeof(nonce),
+		0x12345678,
 		ROUNDS, 0);
 
 	char buffer[16*1024];
