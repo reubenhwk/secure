@@ -7,11 +7,11 @@ ENDSTRUC
 
 
 section	.text
-	global _rc4_crypt
-	global rc4_crypt
+	global _rc4_crypt_x64
+	global rc4_crypt_x64
 
-_rc4_crypt:
-rc4_crypt:
+_rc4_crypt_x64:
+rc4_crypt_x64:
 	;  RDI, RSI, RDX, RCX, R8, and R9
 
 	;  ++arc4->i;

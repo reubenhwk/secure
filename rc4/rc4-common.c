@@ -1,11 +1,13 @@
 
-#include "rc4.h"
+#include "rc4-internal.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-rc4_ctx_t * rc4_new_ctx(unsigned char const * key, size_t keylen, unsigned int flags)
+void rc4_crypt(rc4_ctx_t * rc4, void * _buffer, size_t len);
+
+crypt_t * rc4_new_ctx(unsigned char const * key, size_t keylen, unsigned int flags)
 {
 	rc4_ctx_t * rc4 = malloc(sizeof(rc4_ctx_t));
 
@@ -30,7 +32,11 @@ rc4_ctx_t * rc4_new_ctx(unsigned char const * key, size_t keylen, unsigned int f
 		}
 	}
 
-	return rc4;
+	rc4->h.encrypt = (encrypt_t)rc4_crypt;
+	rc4->h.decrypt = (decrypt_t)rc4_crypt;
+	rc4->h.free = free;
+
+	return (crypt_t*)rc4;
 }
 
 void rc4_free_ctx(rc4_ctx_t * rc4)

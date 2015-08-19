@@ -1,5 +1,5 @@
 
-#include "crypt.h"
+#include "crypt_t.h"
 
 #include <stdint.h>
 
