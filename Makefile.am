@@ -27,7 +27,12 @@ bin_PROGRAMS = \
 	cpt-chacha20 \
 	cpt-chacha12 \
 	cpt-chacha8 \
+	cpt-curve25519 \
 	# end bin_PROGRAMS
+
+cpt_curve25519_SOURCES = \
+	curve25519/curve25519-donna.c \
+	curve25519/curve25519.c
 
 cpt_chacha8_CPPFLAGS = \
 	-DROUNDS=8
