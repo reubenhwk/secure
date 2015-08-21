@@ -837,24 +837,27 @@ crecip(int64_t *out, const int64_t *z) {
 	/* 2^255 - 21 */ fmul(out,t1,z11);
 }
 
-int curve25519_donna(uint8_t *mypublic, const uint8_t *secret, const uint8_t *basepoint)
+int curve25519_donna(curve25519_key_t *mypublic, curve25519_key_t *secret, curve25519_value_t const *basepoint)
 {
-	int64_t bp[10], x[10], z[11], zmone[10];
+	int64_t bp[10];
+	int64_t x[10];
+	int64_t z[11];
+	int64_t zmone[10];
 	uint8_t e[32];
 
 	for (int i = 0; i < 32; ++i) {
-		e[i] = secret[i];
+		e[i] = secret->values[i];
 	}
 	
 	e[0] &= 248;
 	e[31] &= 127;
 	e[31] |= 64;
 
-	fexpand(bp, basepoint);
+	fexpand(bp, basepoint->values);
 	cmult(x, z, e, bp);
 	crecip(zmone, z);
 	fmul(z, x, zmone);
-	fcontract(mypublic, z);
+	fcontract(mypublic->values, z);
 
 	return 0;
 }
