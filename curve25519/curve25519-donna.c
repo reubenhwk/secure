@@ -47,7 +47,9 @@
 
 #include "curve25519.h"
 
+#include <stdlib.h>
 #include <string.h>
+
 
 #ifdef _MSC_VER
 #define inline __inline
@@ -62,29 +64,38 @@
  * i.e. the int64_ts are 26, 25, 26, 25, ... bits wide. */
 
 /* Sum two numbers: output += in */
-static void fsum(int64_t *output, const int64_t *in) {
+static void
+fsum (int64_t * output, const int64_t * in)
+{
 	unsigned i;
-	for (i = 0; i < 10; i += 2) {
-		output[0+i] = output[0+i] + in[0+i];
-		output[1+i] = output[1+i] + in[1+i];
-	}
+	for (i = 0; i < 10; i += 2)
+		{
+			output[0 + i] = output[0 + i] + in[0 + i];
+			output[1 + i] = output[1 + i] + in[1 + i];
+		}
 }
 
 /* Find the difference of two numbers: output = in - output
  * (note the order of the arguments!). */
-static void fdifference(int64_t *output, const int64_t *in) {
+static void
+fdifference (int64_t * output, const int64_t * in)
+{
 	unsigned i;
-	for (i = 0; i < 10; ++i) {
-		output[i] = in[i] - output[i];
-	}
+	for (i = 0; i < 10; ++i)
+		{
+			output[i] = in[i] - output[i];
+		}
 }
 
 /* Multiply a number by a scalar: output = in * scalar */
-static void fscalar_product(int64_t *output, const int64_t *in, const int64_t scalar) {
+static void
+fscalar_product (int64_t * output, const int64_t * in, const int64_t scalar)
+{
 	unsigned i;
-	for (i = 0; i < 10; ++i) {
-		output[i] = in[i] * scalar;
-	}
+	for (i = 0; i < 10; ++i)
+		{
+			output[i] = in[i] * scalar;
+		}
 }
 
 /* Multiply two numbers: output = in2 * in
@@ -93,114 +104,118 @@ static void fscalar_product(int64_t *output, const int64_t *in, const int64_t sc
  * form, the output is not.
  *
  * output[x] <= 14 * the largest product of the input int64_ts. */
-static void fproduct(int64_t *output, const int64_t *in2, const int64_t *in) {
-	output[0] =			 ((int64_t) ((int32_t) in2[0])) * ((int32_t) in[0]);
-	output[1] =			 ((int64_t) ((int32_t) in2[0])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[0]);
-	output[2] =	2 *	((int64_t) ((int32_t) in2[1])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[0]);
-	output[3] =			 ((int64_t) ((int32_t) in2[1])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[0]);
-	output[4] =			 ((int64_t) ((int32_t) in2[2])) * ((int32_t) in[2]) +
-							 2 * (((int64_t) ((int32_t) in2[1])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[1])) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[0]);
-	output[5] =			 ((int64_t) ((int32_t) in2[2])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[0]);
-	output[6] =	2 * (((int64_t) ((int32_t) in2[3])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[1])) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[0]);
-	output[7] =			 ((int64_t) ((int32_t) in2[3])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[0]);
-	output[8] =			 ((int64_t) ((int32_t) in2[4])) * ((int32_t) in[4]) +
-							 2 * (((int64_t) ((int32_t) in2[3])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[1])) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[0]);
-	output[9] =			 ((int64_t) ((int32_t) in2[4])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in2[0])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[0]);
+static void
+fproduct (int64_t * output, const int64_t * in2, const int64_t * in)
+{
+	output[0] = ((int64_t) ((int32_t) in2[0])) * ((int32_t) in[0]);
+	output[1] = ((int64_t) ((int32_t) in2[0])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[1])) * ((int32_t) in[0]);
+	output[2] = 2 * ((int64_t) ((int32_t) in2[1])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[0]);
+	output[3] = ((int64_t) ((int32_t) in2[1])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[3]) +
+		((int64_t) ((int32_t) in2[3])) * ((int32_t) in[0]);
+	output[4] = ((int64_t) ((int32_t) in2[2])) * ((int32_t) in[2]) +
+		2 * (((int64_t) ((int32_t) in2[1])) * ((int32_t) in[3]) +
+	 ((int64_t) ((int32_t) in2[3])) * ((int32_t) in[1])) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[0]);
+	output[5] = ((int64_t) ((int32_t) in2[2])) * ((int32_t) in[3]) +
+		((int64_t) ((int32_t) in2[3])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[1])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[5]) +
+		((int64_t) ((int32_t) in2[5])) * ((int32_t) in[0]);
+	output[6] = 2 * (((int64_t) ((int32_t) in2[3])) * ((int32_t) in[3]) +
+			 ((int64_t) ((int32_t) in2[1])) * ((int32_t) in[5]) +
+			 ((int64_t) ((int32_t) in2[5])) * ((int32_t) in[1])) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[0]);
+	output[7] = ((int64_t) ((int32_t) in2[3])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[3]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[5]) +
+		((int64_t) ((int32_t) in2[5])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[1])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[7]) +
+		((int64_t) ((int32_t) in2[7])) * ((int32_t) in[0]);
+	output[8] = ((int64_t) ((int32_t) in2[4])) * ((int32_t) in[4]) +
+		2 * (((int64_t) ((int32_t) in2[3])) * ((int32_t) in[5]) +
+	 ((int64_t) ((int32_t) in2[5])) * ((int32_t) in[3]) +
+	 ((int64_t) ((int32_t) in2[1])) * ((int32_t) in[7]) +
+	 ((int64_t) ((int32_t) in2[7])) * ((int32_t) in[1])) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[0]);
+	output[9] = ((int64_t) ((int32_t) in2[4])) * ((int32_t) in[5]) +
+		((int64_t) ((int32_t) in2[5])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[3])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[3]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[7]) +
+		((int64_t) ((int32_t) in2[7])) * ((int32_t) in[2]) +
+		((int64_t) ((int32_t) in2[1])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[1]) +
+		((int64_t) ((int32_t) in2[0])) * ((int32_t) in[9]) +
+		((int64_t) ((int32_t) in2[9])) * ((int32_t) in[0]);
 	output[10] = 2 * (((int64_t) ((int32_t) in2[5])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[1])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[1])) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[2]);
-	output[11] =			((int64_t) ((int32_t) in2[5])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in2[2])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[2]);
-	output[12] =			((int64_t) ((int32_t) in2[6])) * ((int32_t) in[6]) +
-							 2 * (((int64_t) ((int32_t) in2[5])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[3])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[3])) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[4]);
-	output[13] =			((int64_t) ((int32_t) in2[6])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[7])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in2[4])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[4]);
+				((int64_t) ((int32_t) in2[3])) * ((int32_t) in[7]) +
+				((int64_t) ((int32_t) in2[7])) * ((int32_t) in[3]) +
+				((int64_t) ((int32_t) in2[1])) * ((int32_t) in[9]) +
+				((int64_t) ((int32_t) in2[9])) * ((int32_t) in[1])) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[2]);
+	output[11] = ((int64_t) ((int32_t) in2[5])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[5]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[7]) +
+		((int64_t) ((int32_t) in2[7])) * ((int32_t) in[4]) +
+		((int64_t) ((int32_t) in2[3])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[3]) +
+		((int64_t) ((int32_t) in2[2])) * ((int32_t) in[9]) +
+		((int64_t) ((int32_t) in2[9])) * ((int32_t) in[2]);
+	output[12] = ((int64_t) ((int32_t) in2[6])) * ((int32_t) in[6]) +
+		2 * (((int64_t) ((int32_t) in2[5])) * ((int32_t) in[7]) +
+	 ((int64_t) ((int32_t) in2[7])) * ((int32_t) in[5]) +
+	 ((int64_t) ((int32_t) in2[3])) * ((int32_t) in[9]) +
+	 ((int64_t) ((int32_t) in2[9])) * ((int32_t) in[3])) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[4]);
+	output[13] = ((int64_t) ((int32_t) in2[6])) * ((int32_t) in[7]) +
+		((int64_t) ((int32_t) in2[7])) * ((int32_t) in[6]) +
+		((int64_t) ((int32_t) in2[5])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[5]) +
+		((int64_t) ((int32_t) in2[4])) * ((int32_t) in[9]) +
+		((int64_t) ((int32_t) in2[9])) * ((int32_t) in[4]);
 	output[14] = 2 * (((int64_t) ((int32_t) in2[7])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[5])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[5])) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[6]);
-	output[15] =			((int64_t) ((int32_t) in2[7])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in2[8])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in2[6])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[6]);
-	output[16] =			((int64_t) ((int32_t) in2[8])) * ((int32_t) in[8]) +
-							 2 * (((int64_t) ((int32_t) in2[7])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[7]));
-	output[17] =			((int64_t) ((int32_t) in2[8])) * ((int32_t) in[9]) +
-										((int64_t) ((int32_t) in2[9])) * ((int32_t) in[8]);
-	output[18] = 2 *	((int64_t) ((int32_t) in2[9])) * ((int32_t) in[9]);
+				((int64_t) ((int32_t) in2[5])) * ((int32_t) in[9]) +
+				((int64_t) ((int32_t) in2[9])) * ((int32_t) in[5])) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[6]);
+	output[15] = ((int64_t) ((int32_t) in2[7])) * ((int32_t) in[8]) +
+		((int64_t) ((int32_t) in2[8])) * ((int32_t) in[7]) +
+		((int64_t) ((int32_t) in2[6])) * ((int32_t) in[9]) +
+		((int64_t) ((int32_t) in2[9])) * ((int32_t) in[6]);
+	output[16] = ((int64_t) ((int32_t) in2[8])) * ((int32_t) in[8]) +
+		2 * (((int64_t) ((int32_t) in2[7])) * ((int32_t) in[9]) +
+	 ((int64_t) ((int32_t) in2[9])) * ((int32_t) in[7]));
+	output[17] = ((int64_t) ((int32_t) in2[8])) * ((int32_t) in[9]) +
+		((int64_t) ((int32_t) in2[9])) * ((int32_t) in[8]);
+	output[18] = 2 * ((int64_t) ((int32_t) in2[9])) * ((int32_t) in[9]);
 }
 
 /* Reduce a long form to a short form by taking the input mod 2^255 - 19.
  *
  * On entry: |output[i]| < 14*2^54
  * On exit: |output[0..8]| < 280*2^54 */
-static void freduce_degree(int64_t *output) {
+static void
+freduce_degree (int64_t * output)
+{
 	/* Each of these shifts and adds ends up multiplying the value by 19.
 	 *
 	 * For output[0..8], the absolute entry value is < 14*2^54 and we add, at
@@ -242,7 +257,7 @@ static void freduce_degree(int64_t *output) {
  *
  * On entry: v can take any value. */
 static inline int64_t
-div_by_2_26(const int64_t v)
+div_by_2_26 (const int64_t v)
 {
 	/* High word of v; no shift needed. */
 	const uint32_t highword = (uint32_t) (((uint64_t) v) >> 32);
@@ -258,9 +273,9 @@ div_by_2_26(const int64_t v)
  *
  * On entry: v can take any value. */
 static inline int64_t
-div_by_2_25(const int64_t v)
+div_by_2_25 (const int64_t v)
 {
-	/* High word of v; no shift needed*/
+	/* High word of v; no shift needed */
 	const uint32_t highword = (uint32_t) (((uint64_t) v) >> 32);
 	/* Set to all 1s if v was negative; else set to 0s. */
 	const int32_t sign = ((int32_t) highword) >> 31;
@@ -273,30 +288,33 @@ div_by_2_25(const int64_t v)
 /* Reduce all coefficients of the short form input so that |x| < 2^26.
  *
  * On entry: |output[i]| < 280*2^54 */
-static void freduce_coefficients(int64_t *output) {
+static void
+freduce_coefficients (int64_t * output)
+{
 	unsigned i;
 
 	output[10] = 0;
 
-	for (i = 0; i < 10; i += 2) {
-		int64_t over = div_by_2_26(output[i]);
-		/* The entry condition (that |output[i]| < 280*2^54) means that over is, at
-		 * most, 280*2^28 in the first iteration of this loop. This is added to the
-		 * next int64_t and we can approximate the resulting bound of that int64_t by
-		 * 281*2^54. */
-		output[i] -= over << 26;
-		output[i+1] += over;
+	for (i = 0; i < 10; i += 2)
+		{
+			int64_t over = div_by_2_26 (output[i]);
+			/* The entry condition (that |output[i]| < 280*2^54) means that over is, at
+			 * most, 280*2^28 in the first iteration of this loop. This is added to the
+			 * next int64_t and we can approximate the resulting bound of that int64_t by
+			 * 281*2^54. */
+			output[i] -= over << 26;
+			output[i + 1] += over;
 
-		/* For the first iteration, |output[i+1]| < 281*2^54, thus |over| <
-		 * 281*2^29. When this is added to the next int64_t, the resulting bound can
-		 * be approximated as 281*2^54.
-		 *
-		 * For subsequent iterations of the loop, 281*2^54 remains a conservative
-		 * bound and no overflow occurs. */
-		over = div_by_2_25(output[i+1]);
-		output[i+1] -= over << 25;
-		output[i+2] += over;
-	}
+			/* For the first iteration, |output[i+1]| < 281*2^54, thus |over| <
+			 * 281*2^29. When this is added to the next int64_t, the resulting bound can
+			 * be approximated as 281*2^54.
+			 *
+			 * For subsequent iterations of the loop, 281*2^54 remains a conservative
+			 * bound and no overflow occurs. */
+			over = div_by_2_25 (output[i + 1]);
+			output[i + 1] -= over << 25;
+			output[i + 2] += over;
+		}
 	/* Now |output[10]| < 281*2^29 and all other coefficients are reduced. */
 	output[0] += output[10] << 4;
 	output[0] += output[10] << 1;
@@ -307,7 +325,7 @@ static void freduce_coefficients(int64_t *output) {
 	/* Now output[1..9] are reduced, and |output[0]| < 2^26 + 19*281*2^29
 	 * So |over| will be no more than 2^16. */
 	{
-		int64_t over = div_by_2_26(output[0]);
+		int64_t over = div_by_2_26 (output[0]);
 		output[0] -= over << 26;
 		output[1] += over;
 	}
@@ -323,14 +341,15 @@ static void freduce_coefficients(int64_t *output) {
  * output must be distinct to both inputs. The output is reduced degree
  * (indeed, one need only provide storage for 10 int64_ts) and |output[i]| < 2^26. */
 static void
-fmul(int64_t *output, const int64_t *in, const int64_t *in2) {
+fmul (int64_t * output, const int64_t * in, const int64_t * in2)
+{
 	int64_t t[19];
-	fproduct(t, in, in2);
+	fproduct (t, in, in2);
 	/* |t[i]| < 14*2^54 */
-	freduce_degree(t);
-	freduce_coefficients(t);
+	freduce_degree (t);
+	freduce_coefficients (t);
 	/* |t[i]| < 2^26 */
-	memcpy(output, t, sizeof(int64_t) * 10);
+	memcpy (output, t, sizeof (int64_t) * 10);
 }
 
 /* Square a number: output = in**2
@@ -339,62 +358,64 @@ fmul(int64_t *output, const int64_t *in, const int64_t *in2) {
  * form, the output is not.
  *
  * output[x] <= 14 * the largest product of the input int64_ts. */
-static void fsquare_inner(int64_t *output, const int64_t *in) {
-	output[0] =			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[0]);
-	output[1] =	2 *	((int64_t) ((int32_t) in[0])) * ((int32_t) in[1]);
-	output[2] =	2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[1]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[2]));
-	output[3] =	2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[2]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[3]));
-	output[4] =			 ((int64_t) ((int32_t) in[2])) * ((int32_t) in[2]) +
-							 4 *	((int64_t) ((int32_t) in[1])) * ((int32_t) in[3]) +
-							 2 *	((int64_t) ((int32_t) in[0])) * ((int32_t) in[4]);
-	output[5] =	2 * (((int64_t) ((int32_t) in[2])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in[1])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[5]));
-	output[6] =	2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[3]) +
-										((int64_t) ((int32_t) in[2])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[6]) +
-							 2 *	((int64_t) ((int32_t) in[1])) * ((int32_t) in[5]));
-	output[7] =	2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[4]) +
-										((int64_t) ((int32_t) in[2])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in[1])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[7]));
-	output[8] =			 ((int64_t) ((int32_t) in[4])) * ((int32_t) in[4]) +
-							 2 * (((int64_t) ((int32_t) in[2])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[8]) +
-							 2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[3])) * ((int32_t) in[5])));
-	output[9] =	2 * (((int64_t) ((int32_t) in[4])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in[3])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in[2])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[1])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in[0])) * ((int32_t) in[9]));
+static void
+fsquare_inner (int64_t * output, const int64_t * in)
+{
+	output[0] = ((int64_t) ((int32_t) in[0])) * ((int32_t) in[0]);
+	output[1] = 2 * ((int64_t) ((int32_t) in[0])) * ((int32_t) in[1]);
+	output[2] = 2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[1]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[2]));
+	output[3] = 2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[2]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[3]));
+	output[4] = ((int64_t) ((int32_t) in[2])) * ((int32_t) in[2]) +
+		4 * ((int64_t) ((int32_t) in[1])) * ((int32_t) in[3]) +
+		2 * ((int64_t) ((int32_t) in[0])) * ((int32_t) in[4]);
+	output[5] = 2 * (((int64_t) ((int32_t) in[2])) * ((int32_t) in[3]) +
+			 ((int64_t) ((int32_t) in[1])) * ((int32_t) in[4]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[5]));
+	output[6] = 2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[3]) +
+			 ((int64_t) ((int32_t) in[2])) * ((int32_t) in[4]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[6]) +
+			 2 * ((int64_t) ((int32_t) in[1])) * ((int32_t) in[5]));
+	output[7] = 2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[4]) +
+			 ((int64_t) ((int32_t) in[2])) * ((int32_t) in[5]) +
+			 ((int64_t) ((int32_t) in[1])) * ((int32_t) in[6]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[7]));
+	output[8] = ((int64_t) ((int32_t) in[4])) * ((int32_t) in[4]) +
+		2 * (((int64_t) ((int32_t) in[2])) * ((int32_t) in[6]) +
+	 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[8]) +
+	 2 * (((int64_t) ((int32_t) in[1])) * ((int32_t) in[7]) +
+				((int64_t) ((int32_t) in[3])) * ((int32_t) in[5])));
+	output[9] = 2 * (((int64_t) ((int32_t) in[4])) * ((int32_t) in[5]) +
+			 ((int64_t) ((int32_t) in[3])) * ((int32_t) in[6]) +
+			 ((int64_t) ((int32_t) in[2])) * ((int32_t) in[7]) +
+			 ((int64_t) ((int32_t) in[1])) * ((int32_t) in[8]) +
+			 ((int64_t) ((int32_t) in[0])) * ((int32_t) in[9]));
 	output[10] = 2 * (((int64_t) ((int32_t) in[5])) * ((int32_t) in[5]) +
-										((int64_t) ((int32_t) in[4])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in[2])) * ((int32_t) in[8]) +
-							 2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[1])) * ((int32_t) in[9])));
+				((int64_t) ((int32_t) in[4])) * ((int32_t) in[6]) +
+				((int64_t) ((int32_t) in[2])) * ((int32_t) in[8]) +
+				2 * (((int64_t) ((int32_t) in[3])) * ((int32_t) in[7]) +
+			 ((int64_t) ((int32_t) in[1])) * ((int32_t) in[9])));
 	output[11] = 2 * (((int64_t) ((int32_t) in[5])) * ((int32_t) in[6]) +
-										((int64_t) ((int32_t) in[4])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[3])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in[2])) * ((int32_t) in[9]));
-	output[12] =			((int64_t) ((int32_t) in[6])) * ((int32_t) in[6]) +
-							 2 * (((int64_t) ((int32_t) in[4])) * ((int32_t) in[8]) +
-							 2 * (((int64_t) ((int32_t) in[5])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[3])) * ((int32_t) in[9])));
+				((int64_t) ((int32_t) in[4])) * ((int32_t) in[7]) +
+				((int64_t) ((int32_t) in[3])) * ((int32_t) in[8]) +
+				((int64_t) ((int32_t) in[2])) * ((int32_t) in[9]));
+	output[12] = ((int64_t) ((int32_t) in[6])) * ((int32_t) in[6]) +
+		2 * (((int64_t) ((int32_t) in[4])) * ((int32_t) in[8]) +
+	 2 * (((int64_t) ((int32_t) in[5])) * ((int32_t) in[7]) +
+				((int64_t) ((int32_t) in[3])) * ((int32_t) in[9])));
 	output[13] = 2 * (((int64_t) ((int32_t) in[6])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[5])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in[4])) * ((int32_t) in[9]));
+				((int64_t) ((int32_t) in[5])) * ((int32_t) in[8]) +
+				((int64_t) ((int32_t) in[4])) * ((int32_t) in[9]));
 	output[14] = 2 * (((int64_t) ((int32_t) in[7])) * ((int32_t) in[7]) +
-										((int64_t) ((int32_t) in[6])) * ((int32_t) in[8]) +
-							 2 *	((int64_t) ((int32_t) in[5])) * ((int32_t) in[9]));
+				((int64_t) ((int32_t) in[6])) * ((int32_t) in[8]) +
+				2 * ((int64_t) ((int32_t) in[5])) * ((int32_t) in[9]));
 	output[15] = 2 * (((int64_t) ((int32_t) in[7])) * ((int32_t) in[8]) +
-										((int64_t) ((int32_t) in[6])) * ((int32_t) in[9]));
-	output[16] =			((int64_t) ((int32_t) in[8])) * ((int32_t) in[8]) +
-							 4 *	((int64_t) ((int32_t) in[7])) * ((int32_t) in[9]);
-	output[17] = 2 *	((int64_t) ((int32_t) in[8])) * ((int32_t) in[9]);
-	output[18] = 2 *	((int64_t) ((int32_t) in[9])) * ((int32_t) in[9]);
+				((int64_t) ((int32_t) in[6])) * ((int32_t) in[9]));
+	output[16] = ((int64_t) ((int32_t) in[8])) * ((int32_t) in[8]) +
+		4 * ((int64_t) ((int32_t) in[7])) * ((int32_t) in[9]);
+	output[17] = 2 * ((int64_t) ((int32_t) in[8])) * ((int32_t) in[9]);
+	output[18] = 2 * ((int64_t) ((int32_t) in[9])) * ((int32_t) in[9]);
 }
 
 /* fsquare sets output = in^2.
@@ -405,36 +426,38 @@ static void fsquare_inner(int64_t *output, const int64_t *in) {
  * On exit: The |output| argument is in reduced coefficients form (indeed, one
  * need only provide storage for 10 int64_ts) and |out[i]| < 2^26. */
 static void
-fsquare(int64_t *output, const int64_t *in) {
+fsquare (int64_t * output, const int64_t * in)
+{
 	int64_t t[19];
-	fsquare_inner(t, in);
+	fsquare_inner (t, in);
 	/* |t[i]| < 14*2^54 because the largest product of two int64_ts will be <
 	 * 2^(27+27) and fsquare_inner adds together, at most, 14 of those
 	 * products. */
-	freduce_degree(t);
-	freduce_coefficients(t);
+	freduce_degree (t);
+	freduce_coefficients (t);
 	/* |t[i]| < 2^26 */
-	memcpy(output, t, sizeof(int64_t) * 10);
+	memcpy (output, t, sizeof (int64_t) * 10);
 }
 
 /* Take a little-endian, 32-byte number and expand it into polynomial form */
 static void
-fexpand(int64_t *output, const uint8_t *input) {
+fexpand (int64_t * output, const uint8_t * input)
+{
 #define F(n,start,shift,mask) \
 	output[n] = ((((int64_t) input[start + 0]) | \
 								((int64_t) input[start + 1]) << 8 | \
 								((int64_t) input[start + 2]) << 16 | \
 								((int64_t) input[start + 3]) << 24) >> shift) & mask;
-	F(0, 0, 0, 0x3ffffff);
-	F(1, 3, 2, 0x1ffffff);
-	F(2, 6, 3, 0x3ffffff);
-	F(3, 9, 5, 0x1ffffff);
-	F(4, 12, 6, 0x3ffffff);
-	F(5, 16, 0, 0x1ffffff);
-	F(6, 19, 1, 0x3ffffff);
-	F(7, 22, 3, 0x1ffffff);
-	F(8, 25, 4, 0x3ffffff);
-	F(9, 28, 6, 0x1ffffff);
+	F (0, 0, 0, 0x3ffffff);
+	F (1, 3, 2, 0x1ffffff);
+	F (2, 6, 3, 0x3ffffff);
+	F (3, 9, 5, 0x1ffffff);
+	F (4, 12, 6, 0x3ffffff);
+	F (5, 16, 0, 0x1ffffff);
+	F (6, 19, 1, 0x3ffffff);
+	F (7, 22, 3, 0x1ffffff);
+	F (8, 25, 4, 0x3ffffff);
+	F (9, 28, 6, 0x1ffffff);
 #undef F
 }
 
@@ -443,7 +466,9 @@ fexpand(int64_t *output, const uint8_t *input) {
 #endif
 
 /* int32_t_eq returns 0xffffffff iff a == b and zero otherwise. */
-static int32_t int32_t_eq(int32_t a, int32_t b) {
+static int32_t
+int32_t_eq (int32_t a, int32_t b)
+{
 	a = ~(a ^ b);
 	a &= a << 16;
 	a &= a << 8;
@@ -455,7 +480,9 @@ static int32_t int32_t_eq(int32_t a, int32_t b) {
 
 /* int32_t_gte returns 0xffffffff if a >= b and zero otherwise, where a and b are
  * both non-negative. */
-static int32_t int32_t_gte(int32_t a, int32_t b) {
+static int32_t
+int32_t_gte (int32_t a, int32_t b)
+{
 	a -= b;
 	/* a >= 0 iff a >= b. */
 	return ~(a >> 31);
@@ -466,47 +493,54 @@ static int32_t int32_t_gte(int32_t a, int32_t b) {
  *
  * On entry: |input_int64_ts[i]| < 2^26 */
 static void
-fcontract(uint8_t *output, int64_t *input_int64_ts) {
+fcontract (uint8_t * output, int64_t * input_int64_ts)
+{
 	int i;
 	int j;
 	int32_t input[10];
 	int32_t mask;
 
 	/* |input_int64_ts[i]| < 2^26, so it's valid to convert to an int32_t. */
-	for (i = 0; i < 10; i++) {
-		input[i] = input_int64_ts[i];
-	}
+	for (i = 0; i < 10; i++)
+		{
+			input[i] = input_int64_ts[i];
+		}
 
-	for (j = 0; j < 2; ++j) {
-		for (i = 0; i < 9; ++i) {
-			if ((i & 1) == 1) {
+	for (j = 0; j < 2; ++j)
+		{
+			for (i = 0; i < 9; ++i)
+	{
+		if ((i & 1) == 1)
+			{
 				/* This calculation is a time-invariant way to make input[i]
 				 * non-negative by borrowing from the next-larger int64_t. */
 				const int32_t mask = input[i] >> 31;
 				const int32_t carry = -((input[i] & mask) >> 25);
 				input[i] = input[i] + (carry << 25);
-				input[i+1] = input[i+1] - carry;
-			} else {
+				input[i + 1] = input[i + 1] - carry;
+			}
+		else
+			{
 				const int32_t mask = input[i] >> 31;
 				const int32_t carry = -((input[i] & mask) >> 26);
 				input[i] = input[i] + (carry << 26);
-				input[i+1] = input[i+1] - carry;
+				input[i + 1] = input[i + 1] - carry;
 			}
-		}
-
-		/* There's no greater int64_t for input[9] to borrow from, but we can multiply
-		 * by 19 and borrow from input[0], which is valid mod 2^255-19. */
-		{
-			const int32_t mask = input[9] >> 31;
-			const int32_t carry = -((input[9] & mask) >> 25);
-			input[9] = input[9] + (carry << 25);
-			input[0] = input[0] - (carry * 19);
-		}
-
-		/* After the first iteration, input[1..9] are non-negative and fit within
-		 * 25 or 26 bits, depending on position. However, input[0] may be
-		 * negative. */
 	}
+
+			/* There's no greater int64_t for input[9] to borrow from, but we can multiply
+			 * by 19 and borrow from input[0], which is valid mod 2^255-19. */
+			{
+	const int32_t mask = input[9] >> 31;
+	const int32_t carry = -((input[9] & mask) >> 25);
+	input[9] = input[9] + (carry << 25);
+	input[0] = input[0] - (carry * 19);
+			}
+
+			/* After the first iteration, input[1..9] are non-negative and fit within
+			 * 25 or 26 bits, depending on position. However, input[0] may be
+			 * negative. */
+		}
 
 	/* The first borrow-propagation pass above ended with every int64_t
 		 except (possibly) input[0] non-negative.
@@ -518,7 +552,7 @@ fcontract(uint8_t *output, int64_t *input_int64_ts) {
 		 In the second pass, each int64_t is decreased by at most one. Thus the second
 		 borrow-propagation pass could only have wrapped around to decrease
 		 input[0] again if the first pass left input[0] negative *and* input[1]
-		 through input[9] were all zero.	In that case, input[1] is now 2^25 - 1,
+		 through input[9] were all zero.			In that case, input[1] is now 2^25 - 1,
 		 and this last borrow-propagation step will leave input[1] non-negative. */
 	{
 		const int32_t mask = input[0] >> 31;
@@ -529,25 +563,30 @@ fcontract(uint8_t *output, int64_t *input_int64_ts) {
 
 	/* All input[i] are now non-negative. However, there might be values between
 	 * 2^25 and 2^26 in a int64_t which is, nominally, 25 bits wide. */
-	for (j = 0; j < 2; j++) {
-		for (i = 0; i < 9; i++) {
-			if ((i & 1) == 1) {
+	for (j = 0; j < 2; j++)
+		{
+			for (i = 0; i < 9; i++)
+	{
+		if ((i & 1) == 1)
+			{
 				const int32_t carry = input[i] >> 25;
 				input[i] &= 0x1ffffff;
-				input[i+1] += carry;
-			} else {
+				input[i + 1] += carry;
+			}
+		else
+			{
 				const int32_t carry = input[i] >> 26;
 				input[i] &= 0x3ffffff;
-				input[i+1] += carry;
+				input[i + 1] += carry;
+			}
+	}
+
+			{
+	const int32_t carry = input[9] >> 25;
+	input[9] &= 0x1ffffff;
+	input[0] += 19 * carry;
 			}
 		}
-
-		{
-			const int32_t carry = input[9] >> 25;
-			input[9] &= 0x1ffffff;
-			input[0] += 19*carry;
-		}
-	}
 
 	/* If the first carry-chain pass, just above, ended up with a carry from
 	 * input[9], and that caused input[0] to be out-of-bounds, then input[0] was
@@ -559,26 +598,34 @@ fcontract(uint8_t *output, int64_t *input_int64_ts) {
 	/* It still remains the case that input might be between 2^255-19 and 2^255.
 	 * In this case, input[1..9] must take their maximum value and input[0] must
 	 * be >= (2^255-19) & 0x3ffffff, which is 0x3ffffed. */
-	mask = int32_t_gte(input[0], 0x3ffffed);
-	for (i = 1; i < 10; i++) {
-		if ((i & 1) == 1) {
-			mask &= int32_t_eq(input[i], 0x1ffffff);
-		} else {
-			mask &= int32_t_eq(input[i], 0x3ffffff);
-		}
+	mask = int32_t_gte (input[0], 0x3ffffed);
+	for (i = 1; i < 10; i++)
+		{
+			if ((i & 1) == 1)
+	{
+		mask &= int32_t_eq (input[i], 0x1ffffff);
 	}
+			else
+	{
+		mask &= int32_t_eq (input[i], 0x3ffffff);
+	}
+		}
 
 	/* mask is either 0xffffffff (if input >= 2^255-19) and zero otherwise. Thus
 	 * this conditionally subtracts 2^255-19. */
 	input[0] -= mask & 0x3ffffed;
 
-	for (i = 1; i < 10; i++) {
-		if ((i & 1) == 1) {
-			input[i] -= mask & 0x1ffffff;
-		} else {
-			input[i] -= mask & 0x3ffffff;
-		}
+	for (i = 1; i < 10; i++)
+		{
+			if ((i & 1) == 1)
+	{
+		input[i] -= mask & 0x1ffffff;
 	}
+			else
+	{
+		input[i] -= mask & 0x3ffffff;
+	}
+		}
 
 	input[1] <<= 2;
 	input[2] <<= 3;
@@ -595,16 +642,16 @@ fcontract(uint8_t *output, int64_t *input_int64_ts) {
 	output[s+3]	= (input[i] >> 24) & 0xff;
 	output[0] = 0;
 	output[16] = 0;
-	F(0,0);
-	F(1,3);
-	F(2,6);
-	F(3,9);
-	F(4,12);
-	F(5,16);
-	F(6,19);
-	F(7,22);
-	F(8,25);
-	F(9,28);
+	F (0, 0);
+	F (1, 3);
+	F (2, 6);
+	F (3, 9);
+	F (4, 12);
+	F (5, 16);
+	F (6, 19);
+	F (7, 22);
+	F (8, 25);
+	F (9, 28);
 #undef F
 }
 
@@ -619,78 +666,80 @@ fcontract(uint8_t *output, int64_t *input_int64_ts) {
  *
  * On entry and exit, the absolute value of the int64_ts of all inputs and outputs
  * are < 2^26. */
-static void fmonty(int64_t *x2, int64_t *z2,	/* output 2Q */
-									 int64_t *x3, int64_t *z3,	/* output Q + Q' */
-									 int64_t *x, int64_t *z,		/* input Q */
-									 int64_t *xprime, int64_t *zprime,	/* input Q' */
-									 const int64_t *qmqp /* input Q - Q' */) {
+static void
+fmonty (int64_t * x2, int64_t * z2,	/* output 2Q */
+	int64_t * x3, int64_t * z3,	/* output Q + Q' */
+	int64_t * x, int64_t * z,	/* input Q */
+	int64_t * xprime, int64_t * zprime,	/* input Q' */
+	const int64_t * qmqp /* input Q - Q' */ )
+{
 	int64_t origx[10], origxprime[10], zzz[19], xx[19], zz[19], xxprime[19],
-				zzprime[19], zzzprime[19], xxxprime[19];
+		zzprime[19], zzzprime[19], xxxprime[19];
 
-	memcpy(origx, x, 10 * sizeof(int64_t));
-	fsum(x, z);
+	memcpy (origx, x, 10 * sizeof (int64_t));
+	fsum (x, z);
 	/* |x[i]| < 2^27 */
-	fdifference(z, origx);	/* does x - z */
+	fdifference (z, origx);	/* does x - z */
 	/* |z[i]| < 2^27 */
 
-	memcpy(origxprime, xprime, sizeof(int64_t) * 10);
-	fsum(xprime, zprime);
+	memcpy (origxprime, xprime, sizeof (int64_t) * 10);
+	fsum (xprime, zprime);
 	/* |xprime[i]| < 2^27 */
-	fdifference(zprime, origxprime);
+	fdifference (zprime, origxprime);
 	/* |zprime[i]| < 2^27 */
-	fproduct(xxprime, xprime, z);
+	fproduct (xxprime, xprime, z);
 	/* |xxprime[i]| < 14*2^54: the largest product of two int64_ts will be <
 	 * 2^(27+27) and fproduct adds together, at most, 14 of those products.
 	 * (Approximating that to 2^58 doesn't work out.) */
-	fproduct(zzprime, x, zprime);
+	fproduct (zzprime, x, zprime);
 	/* |zzprime[i]| < 14*2^54 */
-	freduce_degree(xxprime);
-	freduce_coefficients(xxprime);
+	freduce_degree (xxprime);
+	freduce_coefficients (xxprime);
 	/* |xxprime[i]| < 2^26 */
-	freduce_degree(zzprime);
-	freduce_coefficients(zzprime);
+	freduce_degree (zzprime);
+	freduce_coefficients (zzprime);
 	/* |zzprime[i]| < 2^26 */
-	memcpy(origxprime, xxprime, sizeof(int64_t) * 10);
-	fsum(xxprime, zzprime);
+	memcpy (origxprime, xxprime, sizeof (int64_t) * 10);
+	fsum (xxprime, zzprime);
 	/* |xxprime[i]| < 2^27 */
-	fdifference(zzprime, origxprime);
+	fdifference (zzprime, origxprime);
 	/* |zzprime[i]| < 2^27 */
-	fsquare(xxxprime, xxprime);
+	fsquare (xxxprime, xxprime);
 	/* |xxxprime[i]| < 2^26 */
-	fsquare(zzzprime, zzprime);
+	fsquare (zzzprime, zzprime);
 	/* |zzzprime[i]| < 2^26 */
-	fproduct(zzprime, zzzprime, qmqp);
+	fproduct (zzprime, zzzprime, qmqp);
 	/* |zzprime[i]| < 14*2^52 */
-	freduce_degree(zzprime);
-	freduce_coefficients(zzprime);
+	freduce_degree (zzprime);
+	freduce_coefficients (zzprime);
 	/* |zzprime[i]| < 2^26 */
-	memcpy(x3, xxxprime, sizeof(int64_t) * 10);
-	memcpy(z3, zzprime, sizeof(int64_t) * 10);
+	memcpy (x3, xxxprime, sizeof (int64_t) * 10);
+	memcpy (z3, zzprime, sizeof (int64_t) * 10);
 
-	fsquare(xx, x);
+	fsquare (xx, x);
 	/* |xx[i]| < 2^26 */
-	fsquare(zz, z);
+	fsquare (zz, z);
 	/* |zz[i]| < 2^26 */
-	fproduct(x2, xx, zz);
+	fproduct (x2, xx, zz);
 	/* |x2[i]| < 14*2^52 */
-	freduce_degree(x2);
-	freduce_coefficients(x2);
+	freduce_degree (x2);
+	freduce_coefficients (x2);
 	/* |x2[i]| < 2^26 */
-	fdifference(zz, xx);	// does zz = xx - zz
+	fdifference (zz, xx);		// does zz = xx - zz
 	/* |zz[i]| < 2^27 */
-	memset(zzz + 10, 0, sizeof(int64_t) * 9);
-	fscalar_product(zzz, zz, 121665);
+	memset (zzz + 10, 0, sizeof (int64_t) * 9);
+	fscalar_product (zzz, zz, 121665);
 	/* |zzz[i]| < 2^(27+17) */
 	/* No need to call freduce_degree here:
 		 fscalar_product doesn't increase the degree of its input. */
-	freduce_coefficients(zzz);
+	freduce_coefficients (zzz);
 	/* |zzz[i]| < 2^26 */
-	fsum(zzz, xx);
+	fsum (zzz, xx);
 	/* |zzz[i]| < 2^27 */
-	fproduct(z2, zz, zzz);
+	fproduct (z2, zz, zzz);
 	/* |z2[i]| < 14*2^(26+27) */
-	freduce_degree(z2);
-	freduce_coefficients(z2);
+	freduce_degree (z2);
+	freduce_coefficients (z2);
 	/* |z2|i| < 2^26 */
 }
 
@@ -704,15 +753,17 @@ static void fmonty(int64_t *x2, int64_t *z2,	/* output 2Q */
  * and all all values in a[0..9],b[0..9] must have magnitude less than
  * INT32_MAX. */
 static void
-swap_conditional(int64_t a[19], int64_t b[19], int64_t iswap) {
+swap_conditional (int64_t a[19], int64_t b[19], int64_t iswap)
+{
 	unsigned i;
-	const int32_t swap = (int32_t) -iswap;
+	const int32_t swap = (int32_t) - iswap;
 
-	for (i = 0; i < 10; ++i) {
-		const int32_t x = swap & ( ((int32_t)a[i]) ^ ((int32_t)b[i]) );
-		a[i] = ((int32_t)a[i]) ^ x;
-		b[i] = ((int32_t)b[i]) ^ x;
-	}
+	for (i = 0; i < 10; ++i)
+		{
+			const int32_t x = swap & (((int32_t) a[i]) ^ ((int32_t) b[i]));
+			a[i] = ((int32_t) a[i]) ^ x;
+			b[i] = ((int32_t) b[i]) ^ x;
+		}
 }
 
 /* Calculates nQ where Q is the x-coordinate of a point on the curve
@@ -721,57 +772,70 @@ swap_conditional(int64_t a[19], int64_t b[19], int64_t iswap) {
  *	 n: a little endian, 32-byte number
  *	 q: a point of the curve (short form) */
 static void
-cmult(int64_t *resultx, int64_t *resultz, const uint8_t *n, const int64_t *q) {
-	int64_t a[19] = {0}, b[19] = {1}, c[19] = {1}, d[19] = {0};
+cmult (int64_t * resultx, int64_t * resultz, const uint8_t * n,
+			 const int64_t * q)
+{
+	int64_t a[19] = { 0 }, b[19] =
+	{
+	1}, c[19] =
+	{
+	1}, d[19] =
+	{
+	0};
 	int64_t *nqpqx = a, *nqpqz = b, *nqx = c, *nqz = d, *t;
-	int64_t e[19] = {0}, f[19] = {1}, g[19] = {0}, h[19] = {1};
+	int64_t e[19] = { 0 }, f[19] =
+	{
+	1}, g[19] =
+	{
+	0}, h[19] =
+	{
+	1};
 	int64_t *nqpqx2 = e, *nqpqz2 = f, *nqx2 = g, *nqz2 = h;
 
 	unsigned i, j;
 
-	memcpy(nqpqx, q, sizeof(int64_t) * 10);
+	memcpy (nqpqx, q, sizeof (int64_t) * 10);
 
-	for (i = 0; i < 32; ++i) {
-		uint8_t byte = n[31 - i];
-		for (j = 0; j < 8; ++j) {
-			const int64_t bit = byte >> 7;
+	for (i = 0; i < 32; ++i)
+		{
+			uint8_t byte = n[31 - i];
+			for (j = 0; j < 8; ++j)
+	{
+		const int64_t bit = byte >> 7;
 
-			swap_conditional(nqx, nqpqx, bit);
-			swap_conditional(nqz, nqpqz, bit);
-			fmonty(nqx2, nqz2,
-						 nqpqx2, nqpqz2,
-						 nqx, nqz,
-						 nqpqx, nqpqz,
-						 q);
-			swap_conditional(nqx2, nqpqx2, bit);
-			swap_conditional(nqz2, nqpqz2, bit);
+		swap_conditional (nqx, nqpqx, bit);
+		swap_conditional (nqz, nqpqz, bit);
+		fmonty (nqx2, nqz2, nqpqx2, nqpqz2, nqx, nqz, nqpqx, nqpqz, q);
+		swap_conditional (nqx2, nqpqx2, bit);
+		swap_conditional (nqz2, nqpqz2, bit);
 
-			t = nqx;
-			nqx = nqx2;
-			nqx2 = t;
-			t = nqz;
-			nqz = nqz2;
-			nqz2 = t;
-			t = nqpqx;
-			nqpqx = nqpqx2;
-			nqpqx2 = t;
-			t = nqpqz;
-			nqpqz = nqpqz2;
-			nqpqz2 = t;
+		t = nqx;
+		nqx = nqx2;
+		nqx2 = t;
+		t = nqz;
+		nqz = nqz2;
+		nqz2 = t;
+		t = nqpqx;
+		nqpqx = nqpqx2;
+		nqpqx2 = t;
+		t = nqpqz;
+		nqpqz = nqpqz2;
+		nqpqz2 = t;
 
-			byte <<= 1;
-		}
+		byte <<= 1;
 	}
+		}
 
-	memcpy(resultx, nqx, sizeof(int64_t) * 10);
-	memcpy(resultz, nqz, sizeof(int64_t) * 10);
+	memcpy (resultx, nqx, sizeof (int64_t) * 10);
+	memcpy (resultz, nqz, sizeof (int64_t) * 10);
 }
 
 // -----------------------------------------------------------------------------
 // Shamelessly copied from djb's code
 // -----------------------------------------------------------------------------
 static void
-crecip(int64_t *out, const int64_t *z) {
+crecip (int64_t * out, const int64_t * z)
+{
 	int64_t z2[10];
 	int64_t z9[10];
 	int64_t z11[10];
@@ -784,60 +848,87 @@ crecip(int64_t *out, const int64_t *z) {
 	int64_t t1[10];
 	int i;
 
-	/* 2 */ fsquare(z2,z);
-	/* 4 */ fsquare(t1,z2);
-	/* 8 */ fsquare(t0,t1);
-	/* 9 */ fmul(z9,t0,z);
-	/* 11 */ fmul(z11,z9,z2);
-	/* 22 */ fsquare(t0,z11);
-	/* 2^5 - 2^0 = 31 */ fmul(z2_5_0,t0,z9);
+	/* 2 */ fsquare (z2, z);
+	/* 4 */ fsquare (t1, z2);
+	/* 8 */ fsquare (t0, t1);
+	/* 9 */ fmul (z9, t0, z);
+	/* 11 */ fmul (z11, z9, z2);
+	/* 22 */ fsquare (t0, z11);
+	/* 2^5 - 2^0 = 31 */ fmul (z2_5_0, t0, z9);
 
-	/* 2^6 - 2^1 */ fsquare(t0,z2_5_0);
-	/* 2^7 - 2^2 */ fsquare(t1,t0);
-	/* 2^8 - 2^3 */ fsquare(t0,t1);
-	/* 2^9 - 2^4 */ fsquare(t1,t0);
-	/* 2^10 - 2^5 */ fsquare(t0,t1);
-	/* 2^10 - 2^0 */ fmul(z2_10_0,t0,z2_5_0);
+	/* 2^6 - 2^1 */ fsquare (t0, z2_5_0);
+	/* 2^7 - 2^2 */ fsquare (t1, t0);
+	/* 2^8 - 2^3 */ fsquare (t0, t1);
+	/* 2^9 - 2^4 */ fsquare (t1, t0);
+	/* 2^10 - 2^5 */ fsquare (t0, t1);
+	/* 2^10 - 2^0 */ fmul (z2_10_0, t0, z2_5_0);
 
-	/* 2^11 - 2^1 */ fsquare(t0,z2_10_0);
-	/* 2^12 - 2^2 */ fsquare(t1,t0);
-	/* 2^20 - 2^10 */ for (i = 2;i < 10;i += 2) { fsquare(t0,t1); fsquare(t1,t0); }
-	/* 2^20 - 2^0 */ fmul(z2_20_0,t1,z2_10_0);
+	/* 2^11 - 2^1 */ fsquare (t0, z2_10_0);
+	/* 2^12 - 2^2 */ fsquare (t1, t0);
+	/* 2^20 - 2^10 */ for (i = 2; i < 10; i += 2)
+		{
+			fsquare (t0, t1);
+			fsquare (t1, t0);
+		}
+	/* 2^20 - 2^0 */ fmul (z2_20_0, t1, z2_10_0);
 
-	/* 2^21 - 2^1 */ fsquare(t0,z2_20_0);
-	/* 2^22 - 2^2 */ fsquare(t1,t0);
-	/* 2^40 - 2^20 */ for (i = 2;i < 20;i += 2) { fsquare(t0,t1); fsquare(t1,t0); }
-	/* 2^40 - 2^0 */ fmul(t0,t1,z2_20_0);
+	/* 2^21 - 2^1 */ fsquare (t0, z2_20_0);
+	/* 2^22 - 2^2 */ fsquare (t1, t0);
+	/* 2^40 - 2^20 */ for (i = 2; i < 20; i += 2)
+		{
+			fsquare (t0, t1);
+			fsquare (t1, t0);
+		}
+	/* 2^40 - 2^0 */ fmul (t0, t1, z2_20_0);
 
-	/* 2^41 - 2^1 */ fsquare(t1,t0);
-	/* 2^42 - 2^2 */ fsquare(t0,t1);
-	/* 2^50 - 2^10 */ for (i = 2;i < 10;i += 2) { fsquare(t1,t0); fsquare(t0,t1); }
-	/* 2^50 - 2^0 */ fmul(z2_50_0,t0,z2_10_0);
+	/* 2^41 - 2^1 */ fsquare (t1, t0);
+	/* 2^42 - 2^2 */ fsquare (t0, t1);
+	/* 2^50 - 2^10 */ for (i = 2; i < 10; i += 2)
+		{
+			fsquare (t1, t0);
+			fsquare (t0, t1);
+		}
+	/* 2^50 - 2^0 */ fmul (z2_50_0, t0, z2_10_0);
 
-	/* 2^51 - 2^1 */ fsquare(t0,z2_50_0);
-	/* 2^52 - 2^2 */ fsquare(t1,t0);
-	/* 2^100 - 2^50 */ for (i = 2;i < 50;i += 2) { fsquare(t0,t1); fsquare(t1,t0); }
-	/* 2^100 - 2^0 */ fmul(z2_100_0,t1,z2_50_0);
+	/* 2^51 - 2^1 */ fsquare (t0, z2_50_0);
+	/* 2^52 - 2^2 */ fsquare (t1, t0);
+	/* 2^100 - 2^50 */ for (i = 2; i < 50; i += 2)
+		{
+			fsquare (t0, t1);
+			fsquare (t1, t0);
+		}
+	/* 2^100 - 2^0 */ fmul (z2_100_0, t1, z2_50_0);
 
-	/* 2^101 - 2^1 */ fsquare(t1,z2_100_0);
-	/* 2^102 - 2^2 */ fsquare(t0,t1);
-	/* 2^200 - 2^100 */ for (i = 2;i < 100;i += 2) { fsquare(t1,t0); fsquare(t0,t1); }
-	/* 2^200 - 2^0 */ fmul(t1,t0,z2_100_0);
+	/* 2^101 - 2^1 */ fsquare (t1, z2_100_0);
+	/* 2^102 - 2^2 */ fsquare (t0, t1);
+	/* 2^200 - 2^100 */ for (i = 2; i < 100; i += 2)
+		{
+			fsquare (t1, t0);
+			fsquare (t0, t1);
+		}
+	/* 2^200 - 2^0 */ fmul (t1, t0, z2_100_0);
 
-	/* 2^201 - 2^1 */ fsquare(t0,t1);
-	/* 2^202 - 2^2 */ fsquare(t1,t0);
-	/* 2^250 - 2^50 */ for (i = 2;i < 50;i += 2) { fsquare(t0,t1); fsquare(t1,t0); }
-	/* 2^250 - 2^0 */ fmul(t0,t1,z2_50_0);
+	/* 2^201 - 2^1 */ fsquare (t0, t1);
+	/* 2^202 - 2^2 */ fsquare (t1, t0);
+	/* 2^250 - 2^50 */ for (i = 2; i < 50; i += 2)
+		{
+			fsquare (t0, t1);
+			fsquare (t1, t0);
+		}
+	/* 2^250 - 2^0 */ fmul (t0, t1, z2_50_0);
 
-	/* 2^251 - 2^1 */ fsquare(t1,t0);
-	/* 2^252 - 2^2 */ fsquare(t0,t1);
-	/* 2^253 - 2^3 */ fsquare(t1,t0);
-	/* 2^254 - 2^4 */ fsquare(t0,t1);
-	/* 2^255 - 2^5 */ fsquare(t1,t0);
-	/* 2^255 - 21 */ fmul(out,t1,z11);
+	/* 2^251 - 2^1 */ fsquare (t1, t0);
+	/* 2^252 - 2^2 */ fsquare (t0, t1);
+	/* 2^253 - 2^3 */ fsquare (t1, t0);
+	/* 2^254 - 2^4 */ fsquare (t0, t1);
+	/* 2^255 - 2^5 */ fsquare (t1, t0);
+	/* 2^255 - 21 */ fmul (out, t1, z11);
 }
 
-int curve25519_donna(curve25519_key_t *mypublic, curve25519_key_t *secret, curve25519_value_t const *basepoint)
+void curve25519(
+	curve25519_key_t * mypublic,
+	curve25519_key_t const * secret,
+	curve25519_value_t const *basepoint)
 {
 	int64_t bp[10];
 	int64_t x[10];
@@ -845,19 +936,43 @@ int curve25519_donna(curve25519_key_t *mypublic, curve25519_key_t *secret, curve
 	int64_t zmone[10];
 	uint8_t e[32];
 
-	for (int i = 0; i < 32; ++i) {
-		e[i] = secret->values[i];
-	}
-	
+	for (int i = 0; i < 32; ++i)
+		{
+			e[i] = secret->values[i];
+		}
+
 	e[0] &= 248;
 	e[31] &= 127;
 	e[31] |= 64;
 
-	fexpand(bp, basepoint->values);
-	cmult(x, z, e, bp);
-	crecip(zmone, z);
-	fmul(z, x, zmone);
-	fcontract(mypublic->values, z);
-
-	return 0;
+	fexpand (bp, basepoint->values);
+	cmult (x, z, e, bp);
+	crecip (zmone, z);
+	fmul (z, x, zmone);
+	fcontract (mypublic->values, z);
 }
+
+curve25519_key_t curve25519_public(curve25519_key_t const * private_key)
+{
+	curve25519_value_t const basepoint = {9};
+
+	curve25519_key_t pubkey;
+	curve25519(&pubkey, private_key, &basepoint);
+
+	return pubkey;
+}
+
+curve25519_key_t curve25519_private(void)
+{
+	curve25519_key_t retval;
+	for (int i = 0; i < CURVE22519_COUNT; ++i) {
+		retval.values[i] = rand();/**/
+	}
+	
+	retval.values[0] &= 248;
+	retval.values[31] &= 127;
+	retval.values[31] |= 64;
+
+	return retval;
+}
+
