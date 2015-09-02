@@ -952,7 +952,7 @@ void curve25519(
 	fcontract (mypublic->values, z);
 }
 
-curve25519_key_t curve25519_public(curve25519_key_t const * private_key)
+curve25519_key_t curve25519_compute_public(curve25519_key_t const * private_key)
 {
 	curve25519_value_t const basepoint = {9};
 
@@ -962,7 +962,7 @@ curve25519_key_t curve25519_public(curve25519_key_t const * private_key)
 	return pubkey;
 }
 
-curve25519_key_t curve25519_private(void)
+curve25519_key_t curve25519_generate_private(void)
 {
 	curve25519_key_t retval;
 	for (int i = 0; i < CURVE22519_COUNT; ++i) {

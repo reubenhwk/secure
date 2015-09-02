@@ -18,17 +18,18 @@ int main(int argc, char * argv[])
 	unsigned int seed = (unsigned int)&seed * time(NULL) * 1021;
 	srand(seed);
 
-	curve25519_key_t prikey1 = curve25519_private();
-	curve25519_key_t prikey2 = curve25519_private();
+	curve25519_key_t prikey1 = curve25519_generate_private();
+	curve25519_key_t prikey2 = curve25519_generate_private();
 
-	curve25519_key_t pubkey1 = curve25519_public(&prikey1);
-	curve25519_key_t pubkey2 = curve25519_public(&prikey2);
+	curve25519_key_t pubkey1 = curve25519_compute_public(&prikey1);
+	curve25519_key_t pubkey2 = curve25519_compute_public(&prikey2);
 
 	curve25519_key_t secret1;
 	curve25519_key_t secret2;
 
 	curve25519(&secret1, &prikey1, &pubkey2);
 	curve25519(&secret2, &prikey2, &pubkey1);
+
 	print_key(&prikey1);
 	print_key(&prikey2);
 	print_key(&pubkey1);
