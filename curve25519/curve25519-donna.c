@@ -925,10 +925,10 @@ crecip (int64_t * out, const int64_t * z)
 	/* 2^255 - 21 */ fmul (out, t1, z11);
 }
 
-void curve25519(
-	curve25519_key_t * mypublic,
-	curve25519_key_t const * secret,
-	curve25519_value_t const *basepoint)
+static void curve25519(
+	uint8_t * mypublic,
+	uint8_t const * secret,
+	uint8_t const * basepoint)
 {
 	int64_t bp[10];
 	int64_t x[10];
@@ -938,18 +938,18 @@ void curve25519(
 
 	for (int i = 0; i < 32; ++i)
 		{
-			e[i] = secret->values[i];
+			e[i] = secret[i];
 		}
 
 	e[0] &= 248;
 	e[31] &= 127;
 	e[31] |= 64;
 
-	fexpand (bp, basepoint->values);
+	fexpand (bp, basepoint);
 	cmult (x, z, e, bp);
 	crecip (zmone, z);
 	fmul (z, x, zmone);
-	fcontract (mypublic->values, z);
+	fcontract (mypublic, z);
 }
 
 curve25519_key_t curve25519_compute_public(curve25519_key_t const * private_key)
@@ -957,7 +957,7 @@ curve25519_key_t curve25519_compute_public(curve25519_key_t const * private_key)
 	curve25519_value_t const basepoint = {9};
 
 	curve25519_key_t pubkey;
-	curve25519(&pubkey, private_key, &basepoint);
+	curve25519(pubkey.values, private_key->values, basepoint.values);
 
 	return pubkey;
 }
@@ -975,4 +975,13 @@ curve25519_key_t curve25519_generate_private(void)
 
 	return retval;
 }
+
+void curve25519_compute_secret(
+	curve25519_value_t * secret,
+	curve25519_key_t const * private_key,
+	curve25519_key_t const * public_key)
+{
+	curve25519(secret->values, private_key->values, public_key->values);
+}
+
 
