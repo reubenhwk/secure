@@ -925,7 +925,7 @@ crecip (int64_t * out, const int64_t * z)
 	/* 2^255 - 21 */ fmul (out, t1, z11);
 }
 
-static void curve25519(
+static void curve25519_donna(
 	uint8_t * mypublic,
 	uint8_t const * secret,
 	uint8_t const * basepoint)
@@ -957,7 +957,7 @@ curve25519_key_t curve25519_compute_public(curve25519_key_t const * private_key)
 	curve25519_value_t const basepoint = {9};
 
 	curve25519_key_t pubkey;
-	curve25519(pubkey.values, private_key->values, basepoint.values);
+	curve25519_donna(pubkey.values, private_key->values, basepoint.values);
 
 	return pubkey;
 }
@@ -981,7 +981,7 @@ void curve25519_compute_secret(
 	curve25519_key_t const * private_key,
 	curve25519_key_t const * public_key)
 {
-	curve25519(secret->values, private_key->values, public_key->values);
+	curve25519_donna(secret->values, private_key->values, public_key->values);
 }
 
 
