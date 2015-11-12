@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define MD_LENGTH 16
+
 typedef struct {
 	union {
 		uint32_t _32[4];
