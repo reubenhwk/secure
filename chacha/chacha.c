@@ -156,6 +156,7 @@ crypt_t * chacha_new_ctx(
 	return (crypt_t*)ctx;
 }
 
+#ifdef DEFINE_CHACHA_MAIN
 int main(int argc, char * argv[])
 {
 	unsigned char key[32] = {
@@ -195,4 +196,5 @@ int main(int argc, char * argv[])
 
 	return 0;
 }
+#endif
 

@@ -105,6 +105,7 @@ void MD4_Final(md4_t * md, unsigned char * digest, size_t len)
 	MD_Final(md, digest, len, md4_round);
 }
 
+#ifdef DEFINE_MD4_MAIN
 int main()
 {
 	md4_t ctx;
@@ -126,4 +127,4 @@ int main()
 
 	return 0;
 }
-
+#endif

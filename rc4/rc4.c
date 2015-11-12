@@ -44,6 +44,7 @@ void rc4_crypt(rc4_ctx_t * rc4, void * _buffer, size_t len)
 }
 #endif
 
+#ifdef DEFINE_RC4_MAIN
 int main(void)
 {
 	crypt_t * rc4 = rc4_new_ctx(NULL, 0, 0);
@@ -61,4 +62,5 @@ int main(void)
 	rc4->free(rc4);
 	return 0;
 }
+#endif
 

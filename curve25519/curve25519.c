@@ -3,8 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
+#ifdef DEFINE_CURVE25519_MAIN
+#include <time.h>
 static void print_key(curve25519_key_t const * key)
 {
 	for (int i = 0; i < CURVE22519_COUNT; ++i) {
@@ -14,8 +15,9 @@ static void print_key(curve25519_key_t const * key)
 
 int main(int argc, char * argv[])
 {
-	unsigned int seed = (unsigned int)&seed * time(NULL) * 1021;
-	srand(seed);
+	struct timespec tv = {};
+	clock_gettime(CLOCK_REALTIME, &tv);
+	srand(tv.tv_sec * tv.tv_nsec);
 
 	curve25519_key_t prikey1 = curve25519_generate_private();
 	curve25519_key_t prikey2 = curve25519_generate_private();
@@ -29,14 +31,14 @@ int main(int argc, char * argv[])
 	curve25519_compute_secret(&secret1, &prikey1, &pubkey2);
 	curve25519_compute_secret(&secret2, &prikey2, &pubkey1);
 
-	print_key(&secret1);
+	print_key((curve25519_key_t*)&secret1);
 	printf(" = ");
 	print_key(&prikey1);
 	printf(" * ");
 	print_key(&pubkey2);
 	printf("\n");
 
-	print_key(&secret2);
+	print_key((curve25519_key_t*)&secret2);
 	printf(" = ");
 	print_key(&prikey2);
 	printf(" * ");
@@ -46,4 +48,5 @@ int main(int argc, char * argv[])
 
 	return 0;
 }
+#endif
 
