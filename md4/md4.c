@@ -116,10 +116,10 @@ int main()
 		MD4_Update(&ctx, (unsigned char*)buffer, rc);
 	}
 
-	unsigned char dgst[16];
-	MD4_Final(&ctx, dgst, 16);
+	unsigned char dgst[MD4_LENGTH];
+	MD4_Final(&ctx, dgst, MD4_LENGTH);
 
-	for (int i = 0; i < 16; ++i) {
+	for (int i = 0; i < MD4_LENGTH; ++i) {
 		printf("%02x", dgst[i]);
 	}
 	printf("\n");

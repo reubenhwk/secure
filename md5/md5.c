@@ -152,10 +152,10 @@ int main()
 		MD5_Update(&ctx, (unsigned char*)buffer, rc);
 	}
 
-	unsigned char dgst[16];
-	MD5_Final(&ctx, dgst, 16);
+	unsigned char dgst[MD5_LENGTH];
+	MD5_Final(&ctx, dgst, MD5_LENGTH);
 
-	for (int i = 0; i < 16; ++i) {
+	for (int i = 0; i < MD5_LENGTH; ++i) {
 		printf("%02x", dgst[i]);
 	}
 	printf("\n");
