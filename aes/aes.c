@@ -7,7 +7,7 @@
 //internal stuff
 
 //macros
-#define DO_ENC_BLOCK(m,k) \
+#define AES128_ENC_BLOCK(m,k) \
     do{\
         m = _mm_xor_si128       (m, k[ 0]); \
         m = _mm_aesenc_si128    (m, k[ 1]); \
@@ -22,7 +22,7 @@
         m = _mm_aesenclast_si128(m, k[10]);\
     }while(0)
 
-#define DO_DEC_BLOCK(m,k) \
+#define AES128_DEC_BLOCK(m,k) \
     do{\
         m = _mm_xor_si128       (m, k[10+0]); \
         m = _mm_aesdec_si128    (m, k[10+1]); \
@@ -81,7 +81,7 @@ void aes128_load_key(int8_t *enc_key){
 void aes128_enc(int8_t *plainText,int8_t *cipherText){
     __m128i m = _mm_loadu_si128((__m128i *) plainText);
 
-    DO_ENC_BLOCK(m,key_schedule);
+    AES128_ENC_BLOCK(m,key_schedule);
 
     _mm_storeu_si128((__m128i *) cipherText, m);
 }
@@ -89,7 +89,7 @@ void aes128_enc(int8_t *plainText,int8_t *cipherText){
 void aes128_dec(int8_t *cipherText,int8_t *plainText){
     __m128i m = _mm_loadu_si128((__m128i *) cipherText);
 
-    DO_DEC_BLOCK(m,key_schedule);
+    AES128_DEC_BLOCK(m,key_schedule);
 
     _mm_storeu_si128((__m128i *) plainText, m);
 }
